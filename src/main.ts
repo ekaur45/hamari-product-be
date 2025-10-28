@@ -6,6 +6,7 @@ import { Logger } from '@nestjs/common';
 import { GlobalExceptionFilter } from './filters/global-exception/global-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
+import multer from 'multer';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
@@ -29,6 +30,8 @@ async function bootstrap() {
   // ✅ Enable JSON & URL-encoded body parsing
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
+  // Enable multipart/form-data parsing
+  app.use(multer({ dest: './uploads' }).any());
   app.setGlobalPrefix('/api');
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());

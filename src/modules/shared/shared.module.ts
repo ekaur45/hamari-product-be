@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import UserDetail from 'src/database/entities/user-details.entity';
 import User from 'src/database/entities/user.entity';
+import UserEducation from 'src/database/entities/user-education.entity';
+import UserAvailability from 'src/database/entities/user-availability.entity';
 import Academy from 'src/database/entities/academy.entity';
 import Class from 'src/database/entities/class.entity';
 import ClassEnrollment from 'src/database/entities/class-enrollment.entity';
@@ -14,6 +16,8 @@ import AcademyInvitation from 'src/database/entities/academy-invitation.entity';
 const ENTITIES = [
   User,
   UserDetail,
+  UserEducation,
+  UserAvailability,
   Academy,
   Class,
   ClassEnrollment,

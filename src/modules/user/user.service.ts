@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import User from '../../database/entities/user.entity';
+import UserDetail from '../../database/entities/user-details.entity';
+import UserEducation, { EducationType } from '../../database/entities/user-education.entity';
+import UserAvailability from '../../database/entities/user-availability.entity';
 import { Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
+import { EducationItem, AvailabilitySlot } from './types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRole } from '../shared/enums';
@@ -17,6 +22,12 @@ export default class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(UserDetail)
+    private readonly userDetailRepository: Repository<UserDetail>,
+    @InjectRepository(UserEducation)
+    private readonly userEducationRepository: Repository<UserEducation>,
+    @InjectRepository(UserAvailability)
+    private readonly userAvailabilityRepository: Repository<UserAvailability>,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -82,6 +93,60 @@ export default class UserService {
 
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
+  }
+
+  private async getOrCreateDetails(userId: string): Promise<UserDetail> {
+    let details = await this.userDetailRepository.findOne({ where: { userId } });
+    if (!details) {
+      details = this.userDetailRepository.create({ userId });
+      details = await this.userDetailRepository.save(details);
+    }
+    return details;
+  }
+
+  async updateDetails(userId: string, dto: Partial<UserDetail>): Promise<UserDetail> {
+    const details = await this.getOrCreateDetails(userId);
+    Object.assign(details, dto);
+    return await this.userDetailRepository.save(details);
+  }
+
+  async getEducation(userId: string): Promise<UserEducation[]> {
+    return await this.userEducationRepository.find({ where: { userId } });
+  }
+
+  async addEducation(userId: string, dto: Omit<UserEducation, 'id' | 'createdAt' | 'updatedAt' | 'user'>): Promise<UserEducation> {
+    const item = this.userEducationRepository.create({ ...dto, userId });
+    return await this.userEducationRepository.save(item);
+  }
+
+  async updateEducation(userId: string, eduId: string, dto: Partial<UserEducation>): Promise<UserEducation> {
+    const found = await this.userEducationRepository.findOne({ where: { id: eduId, userId } });
+    if (!found) throw new NotFoundException('Education not found');
+    Object.assign(found, dto);
+    return await this.userEducationRepository.save(found);
+  }
+
+  async deleteEducation(userId: string, eduId: string): Promise<void> {
+    await this.userEducationRepository.delete({ id: eduId, userId });
+  }
+
+  async getAvailability(userId: string): Promise<{ slots: UserAvailability[] }> {
+    const slots = await this.userAvailabilityRepository.find({ where: { userId } });
+    return { slots };
+  }
+
+  async updateAvailability(userId: string, payload: { slots: { dayOfWeek: number; startTime: string; endTime: string; notes?: string }[] }): Promise<{ slots: UserAvailability[] }> {
+    // Simple replace strategy
+    await this.userAvailabilityRepository.delete({ userId });
+    const toSave = payload.slots.map((s) => this.userAvailabilityRepository.create({ userId, ...s }));
+    const saved = await this.userAvailabilityRepository.save(toSave);
+    return { slots: saved };
+  }
+
+  async updateAvatar(userId: string, avatarUrl: string): Promise<UserDetail> {
+    const details = await this.getOrCreateDetails(userId);
+    details.profileImage = avatarUrl;
+    return await this.userDetailRepository.save(details);
   }
 
   async updateUser(

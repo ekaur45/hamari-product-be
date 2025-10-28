@@ -1,15 +1,5 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Request,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -44,6 +34,64 @@ export default class UserController {
   ): Promise<ApiResponseModel<User>> {
     const user = await this.userService.createUser(createUserDto);
     return ApiResponseModel.success(user, 'User created successfully');
+  }
+
+  // Details (bio/phone/address/dob)
+  @Put(':id/details')
+  async updateDetails(
+    @Param('id') id: string,
+    @Body() body: any,
+  ) {
+    const details = await this.userService.updateDetails(id, body);
+    return ApiResponseModel.success(details, 'Details updated');
+  }
+
+  // Education
+  @Get(':id/education')
+  async getEducation(@Param('id') id: string) {
+    const items = await this.userService.getEducation(id);
+    return ApiResponseModel.success(items, 'Education fetched');
+  }
+
+  @Post(':id/education')
+  async addEducation(@Param('id') id: string, @Body() body: any) {
+    const item = await this.userService.addEducation(id, body);
+    return ApiResponseModel.success(item, 'Education added');
+  }
+
+  @Put(':id/education/:eduId')
+  async updateEducation(@Param('id') id: string, @Param('eduId') eduId: string, @Body() body: any) {
+    const item = await this.userService.updateEducation(id, eduId, body);
+    return ApiResponseModel.success(item, 'Education updated');
+  }
+
+  @Delete(':id/education/:eduId')
+  async deleteEducation(@Param('id') id: string, @Param('eduId') eduId: string) {
+    await this.userService.deleteEducation(id, eduId);
+    return ApiResponseModel.success(null, 'Education deleted');
+  }
+
+  // Availability
+  @Get(':id/availability')
+  async getAvailability(@Param('id') id: string) {
+    const res = await this.userService.getAvailability(id);
+    return ApiResponseModel.success(res, 'Availability fetched');
+  }
+
+  @Put(':id/availability')
+  async updateAvailability(@Param('id') id: string, @Body() body: any) {
+    const res = await this.userService.updateAvailability(id, body);
+    return ApiResponseModel.success(res, 'Availability updated');
+  }
+
+  // Avatar upload (expects multipart/form-data with field 'file')
+  @Post(':id/avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(@Param('id') id: string, @UploadedFile() file: Express.Multer.File) {
+    // In a production app, persist file to storage and generate a public URL
+    const url = `/uploads/${file.filename}`;
+    const details = await this.userService.updateAvatar(id, url);
+    return ApiResponseModel.success({ avatarUrl: details.profileImage }, 'Avatar updated');
   }
 
   @Get()
