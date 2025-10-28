@@ -1,0 +1,120 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class New1761652508367 implements MigrationInterface {
+    name = 'New1761652508367'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE \`teachers\` (\`id\` varchar(36) NOT NULL, \`userId\` varchar(255) NOT NULL, \`name\` varchar(255) NOT NULL, \`subject\` varchar(255) NOT NULL, \`email\` varchar(255) NOT NULL, \`isActive\` tinyint NOT NULL DEFAULT 1, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`performances\` (\`id\` varchar(36) NOT NULL, \`studentId\` varchar(255) NOT NULL, \`classId\` varchar(255) NOT NULL, \`type\` enum ('attendance', 'homework', 'quiz', 'exam', 'project', 'participation', 'other') NOT NULL, \`title\` varchar(200) NOT NULL, \`description\` text NULL, \`score\` decimal(5,2) NULL, \`maxScore\` decimal(5,2) NULL, \`feedback\` text NULL, \`metadata\` json NULL, \`date\` datetime NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isDeleted\` tinyint NOT NULL DEFAULT 0, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`students\` (\`id\` varchar(36) NOT NULL, \`userId\` varchar(255) NOT NULL, \`name\` varchar(255) NOT NULL, \`dateOfBirth\` int NOT NULL, \`email\` varchar(255) NOT NULL, \`enrolled\` tinyint NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`payments\` (\`id\` varchar(36) NOT NULL, \`amount\` decimal(10,2) NOT NULL, \`status\` enum ('pending', 'completed', 'failed', 'refunded') NOT NULL DEFAULT 'pending', \`method\` enum ('cash', 'bank_transfer', 'credit_card', 'debit_card', 'online') NOT NULL, \`transactionId\` varchar(200) NULL, \`description\` text NULL, \`notes\` text NULL, \`payerId\` varchar(255) NOT NULL, \`classId\` varchar(255) NULL, \`enrollmentId\` varchar(255) NULL, \`paidAt\` datetime NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isDeleted\` tinyint NOT NULL DEFAULT 0, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`parents\` (\`id\` varchar(36) NOT NULL, \`userId\` varchar(255) NOT NULL, \`firstName\` varchar(100) NOT NULL, \`lastName\` varchar(100) NOT NULL, \`email\` varchar(255) NOT NULL, \`phoneNumber\` varchar(255) NULL, \`password\` varchar(255) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NOT NULL DEFAULT 1, UNIQUE INDEX \`IDX_07b4151ae2a983823d922d5cf0\` (\`email\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`parent_children\` (\`id\` varchar(36) NOT NULL, \`parentId\` varchar(255) NOT NULL, \`childId\` varchar(255) NOT NULL, \`relationshipType\` enum ('father', 'mother', 'guardian', 'grandparent', 'sibling', 'other') NOT NULL, \`status\` enum ('active', 'inactive', 'pending') NOT NULL DEFAULT 'active', \`notes\` text NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isDeleted\` tinyint NOT NULL DEFAULT 0, UNIQUE INDEX \`IDX_97b52ebf6575c48adab29cb650\` (\`parentId\`, \`childId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`classes\` (\`id\` int NOT NULL AUTO_INCREMENT, \`name\` varchar(255) NOT NULL, \`description\` varchar(255) NOT NULL, \`createdAt\` datetime NOT NULL, \`updatedAt\` datetime NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`class_enrollments\` (\`id\` varchar(36) NOT NULL, \`studentId\` varchar(255) NOT NULL, \`classId\` varchar(255) NOT NULL, \`status\` enum ('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending', \`paidAmount\` decimal(10,2) NOT NULL, \`notes\` text NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isDeleted\` tinyint NOT NULL DEFAULT 0, UNIQUE INDEX \`IDX_c3947285ffe8bb2556f816f260\` (\`studentId\`, \`classId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`academies\` (\`id\` varchar(36) NOT NULL, \`name\` varchar(200) NOT NULL, \`description\` varchar(500) NULL, \`address\` varchar(200) NULL, \`phone\` varchar(20) NULL, \`email\` varchar(100) NULL, \`website\` varchar(200) NULL, \`logo\` text NULL, \`status\` enum ('active', 'inactive', 'suspended') NOT NULL DEFAULT 'active', \`monthlyFee\` decimal(10,2) NOT NULL DEFAULT '0.00', \`individualClassFee\` decimal(10,2) NOT NULL DEFAULT '0.00', \`ownerId\` varchar(255) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isDeleted\` tinyint NOT NULL DEFAULT 0, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`academy_teachers\` (\`id\` varchar(36) NOT NULL, \`academyId\` varchar(255) NOT NULL, \`teacherId\` varchar(255) NOT NULL, \`role\` enum ('teacher', 'senior_teacher', 'head_teacher', 'admin') NOT NULL DEFAULT 'teacher', \`status\` enum ('active', 'inactive', 'suspended') NOT NULL DEFAULT 'active', \`salary\` decimal(10,2) NULL, \`notes\` text NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isDeleted\` tinyint NOT NULL DEFAULT 0, UNIQUE INDEX \`IDX_65d5b7a199f6f2f30aec4310a3\` (\`academyId\`, \`teacherId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`academy_invitations\` (\`id\` varchar(36) NOT NULL, \`academyId\` varchar(255) NOT NULL, \`invitedTeacherId\` varchar(255) NOT NULL, \`invitedByUserId\` varchar(255) NOT NULL, \`status\` enum ('pending', 'accepted', 'declined', 'expired') NOT NULL DEFAULT 'pending', \`message\` text NULL, \`expiresAt\` datetime NOT NULL, \`respondedAt\` datetime NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isDeleted\` tinyint NOT NULL DEFAULT 0, \`invitedById\` varchar(36) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`name\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`name\` varchar(255) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`title\` varchar(200) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`type\` enum ('individual', 'academy') NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`status\` enum ('scheduled', 'ongoing', 'completed', 'cancelled') NOT NULL DEFAULT 'scheduled'`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`startTime\` datetime NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`endTime\` datetime NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`maxStudents\` int NOT NULL DEFAULT '1'`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`fee\` decimal(10,2) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`location\` varchar(200) NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`meetingLink\` text NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`teacherId\` varchar(255) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`academyId\` varchar(255) NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`isDeleted\` tinyint NOT NULL DEFAULT 0`);
+        await queryRunner.query(`ALTER TABLE \`users\` DROP COLUMN \`role\``);
+        await queryRunner.query(`ALTER TABLE \`users\` ADD \`role\` enum ('Admin', 'Teacher', 'Parent', 'Student', 'Other') NOT NULL DEFAULT 'Other'`);
+        await queryRunner.query(`ALTER TABLE \`classes\` CHANGE \`id\` \`id\` int NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`id\` varchar(36) NOT NULL PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`description\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`description\` text NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` CHANGE \`createdAt\` \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`);
+        await queryRunner.query(`ALTER TABLE \`classes\` CHANGE \`updatedAt\` \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)`);
+        await queryRunner.query(`ALTER TABLE \`performances\` ADD CONSTRAINT \`FK_d1cb7bdde673776be19e1b7623d\` FOREIGN KEY (\`studentId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`performances\` ADD CONSTRAINT \`FK_e148baf580c789b716c532dbb1b\` FOREIGN KEY (\`classId\`) REFERENCES \`classes\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`payments\` ADD CONSTRAINT \`FK_ff40a657baa9226eb63c6c01dd3\` FOREIGN KEY (\`payerId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`payments\` ADD CONSTRAINT \`FK_36161da22680efd0b381bbf03d7\` FOREIGN KEY (\`classId\`) REFERENCES \`classes\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`payments\` ADD CONSTRAINT \`FK_464b05dd47d8e121425b1925bee\` FOREIGN KEY (\`enrollmentId\`) REFERENCES \`class_enrollments\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`parent_children\` ADD CONSTRAINT \`FK_ef3f10e877846e162781086e846\` FOREIGN KEY (\`parentId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`parent_children\` ADD CONSTRAINT \`FK_e3bbd2e9386b2f512e61625d62f\` FOREIGN KEY (\`childId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD CONSTRAINT \`FK_4b7ac7a7eb91f3e04229c7c0b6f\` FOREIGN KEY (\`teacherId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD CONSTRAINT \`FK_7cc795906d5950759129273d926\` FOREIGN KEY (\`academyId\`) REFERENCES \`academies\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`class_enrollments\` ADD CONSTRAINT \`FK_734bdf4820519ed09210db164b1\` FOREIGN KEY (\`studentId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`class_enrollments\` ADD CONSTRAINT \`FK_521c435eb0bf92e3b1550154695\` FOREIGN KEY (\`classId\`) REFERENCES \`classes\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`academies\` ADD CONSTRAINT \`FK_482f13c107afb2a671e2bc46fd2\` FOREIGN KEY (\`ownerId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`academy_teachers\` ADD CONSTRAINT \`FK_fe4791f97f122e4e62d9d242851\` FOREIGN KEY (\`academyId\`) REFERENCES \`academies\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`academy_teachers\` ADD CONSTRAINT \`FK_e29327fcd2f739b78b9d14e4756\` FOREIGN KEY (\`teacherId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`academy_invitations\` ADD CONSTRAINT \`FK_6764fba3f787291c256d7a35b6f\` FOREIGN KEY (\`academyId\`) REFERENCES \`academies\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`academy_invitations\` ADD CONSTRAINT \`FK_2998ec3b0cad18858e800fee171\` FOREIGN KEY (\`invitedTeacherId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`academy_invitations\` ADD CONSTRAINT \`FK_84f7f500e43f56c2634aa7bbc91\` FOREIGN KEY (\`invitedById\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`academy_invitations\` DROP FOREIGN KEY \`FK_84f7f500e43f56c2634aa7bbc91\``);
+        await queryRunner.query(`ALTER TABLE \`academy_invitations\` DROP FOREIGN KEY \`FK_2998ec3b0cad18858e800fee171\``);
+        await queryRunner.query(`ALTER TABLE \`academy_invitations\` DROP FOREIGN KEY \`FK_6764fba3f787291c256d7a35b6f\``);
+        await queryRunner.query(`ALTER TABLE \`academy_teachers\` DROP FOREIGN KEY \`FK_e29327fcd2f739b78b9d14e4756\``);
+        await queryRunner.query(`ALTER TABLE \`academy_teachers\` DROP FOREIGN KEY \`FK_fe4791f97f122e4e62d9d242851\``);
+        await queryRunner.query(`ALTER TABLE \`academies\` DROP FOREIGN KEY \`FK_482f13c107afb2a671e2bc46fd2\``);
+        await queryRunner.query(`ALTER TABLE \`class_enrollments\` DROP FOREIGN KEY \`FK_521c435eb0bf92e3b1550154695\``);
+        await queryRunner.query(`ALTER TABLE \`class_enrollments\` DROP FOREIGN KEY \`FK_734bdf4820519ed09210db164b1\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP FOREIGN KEY \`FK_7cc795906d5950759129273d926\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP FOREIGN KEY \`FK_4b7ac7a7eb91f3e04229c7c0b6f\``);
+        await queryRunner.query(`ALTER TABLE \`parent_children\` DROP FOREIGN KEY \`FK_e3bbd2e9386b2f512e61625d62f\``);
+        await queryRunner.query(`ALTER TABLE \`parent_children\` DROP FOREIGN KEY \`FK_ef3f10e877846e162781086e846\``);
+        await queryRunner.query(`ALTER TABLE \`payments\` DROP FOREIGN KEY \`FK_464b05dd47d8e121425b1925bee\``);
+        await queryRunner.query(`ALTER TABLE \`payments\` DROP FOREIGN KEY \`FK_36161da22680efd0b381bbf03d7\``);
+        await queryRunner.query(`ALTER TABLE \`payments\` DROP FOREIGN KEY \`FK_ff40a657baa9226eb63c6c01dd3\``);
+        await queryRunner.query(`ALTER TABLE \`performances\` DROP FOREIGN KEY \`FK_e148baf580c789b716c532dbb1b\``);
+        await queryRunner.query(`ALTER TABLE \`performances\` DROP FOREIGN KEY \`FK_d1cb7bdde673776be19e1b7623d\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` CHANGE \`updatedAt\` \`updatedAt\` datetime NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` CHANGE \`createdAt\` \`createdAt\` datetime NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`description\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`description\` varchar(255) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`id\` int NOT NULL AUTO_INCREMENT`);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD PRIMARY KEY (\`id\`)`);
+        await queryRunner.query(`ALTER TABLE \`classes\` CHANGE \`id\` \`id\` int NOT NULL AUTO_INCREMENT`);
+        await queryRunner.query(`ALTER TABLE \`users\` DROP COLUMN \`role\``);
+        await queryRunner.query(`ALTER TABLE \`users\` ADD \`role\` varchar(255) NOT NULL DEFAULT 'Other'`);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`isDeleted\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`academyId\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`teacherId\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`meetingLink\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`location\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`fee\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`maxStudents\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`endTime\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`startTime\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`status\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`type\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`title\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` DROP COLUMN \`name\``);
+        await queryRunner.query(`ALTER TABLE \`classes\` ADD \`name\` varchar(255) NOT NULL`);
+        await queryRunner.query(`DROP TABLE \`academy_invitations\``);
+        await queryRunner.query(`DROP INDEX \`IDX_65d5b7a199f6f2f30aec4310a3\` ON \`academy_teachers\``);
+        await queryRunner.query(`DROP TABLE \`academy_teachers\``);
+        await queryRunner.query(`DROP TABLE \`academies\``);
+        await queryRunner.query(`DROP INDEX \`IDX_c3947285ffe8bb2556f816f260\` ON \`class_enrollments\``);
+        await queryRunner.query(`DROP TABLE \`class_enrollments\``);
+        await queryRunner.query(`DROP TABLE \`classes\``);
+        await queryRunner.query(`DROP INDEX \`IDX_97b52ebf6575c48adab29cb650\` ON \`parent_children\``);
+        await queryRunner.query(`DROP TABLE \`parent_children\``);
+        await queryRunner.query(`DROP INDEX \`IDX_07b4151ae2a983823d922d5cf0\` ON \`parents\``);
+        await queryRunner.query(`DROP TABLE \`parents\``);
+        await queryRunner.query(`DROP TABLE \`payments\``);
+        await queryRunner.query(`DROP TABLE \`students\``);
+        await queryRunner.query(`DROP TABLE \`performances\``);
+        await queryRunner.query(`DROP TABLE \`teachers\``);
+    }
+
+}
