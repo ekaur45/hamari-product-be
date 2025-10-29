@@ -96,4 +96,25 @@ export class CreateClassDto {
   @IsOptional()
   @IsUUID(4, { message: 'Academy ID must be a valid UUID' })
   academyId?: string;
+
+  // Compatibility fields for front-end variant (optional)
+  @ApiProperty({ required: false, description: 'Alternative: name' })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiProperty({ required: false, description: 'Alternative: startDate' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiProperty({ required: false, description: 'Alternative: endDate' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @ApiProperty({ required: false, description: 'Teacher to assign (owner only)' })
+  @IsOptional()
+  @IsUUID(4)
+  teacherId?: string;
 }

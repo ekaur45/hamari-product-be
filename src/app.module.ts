@@ -13,6 +13,7 @@ import { ParentChildModule } from './modules/parent-child/parent-child.module';
 import { InvitationModule } from './modules/invitation/invitation.module';
 import { StudentModule } from './modules/student/student.module';
 import { TeacherModule } from './modules/teacher/teacher.module';
+import { SubjectModule } from './modules/subject/subject.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -48,6 +49,7 @@ import { TeacherModule } from './modules/teacher/teacher.module';
     InvitationModule,
     StudentModule,
     TeacherModule,
+    SubjectModule,
   ],
   controllers: [],
   providers: [],

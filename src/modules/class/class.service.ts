@@ -29,30 +29,55 @@ export class ClassService {
 
   async createClass(
     createClassDto: CreateClassDto,
-    teacherId: string,
+    creatorUserId: string,
   ): Promise<Class> {
-    const teacher = await this.userRepository.findOne({
-      where: { id: teacherId, role: UserRole.TEACHER },
-    });
+    const creator = await this.userRepository.findOne({ where: { id: creatorUserId } });
+    if (!creator) throw new NotFoundException('User not found');
 
-    if (!teacher) {
-      throw new NotFoundException('Teacher not found');
+    let teacherIdToUse: string | undefined = undefined;
+
+    if (creator.role === UserRole.TEACHER) {
+      teacherIdToUse = creatorUserId;
+    } else if (creator.role === UserRole.ACADEMY_OWNER) {
+      if (!createClassDto.teacherId) {
+        throw new BadRequestException('teacherId is required when creating as academy owner');
+      }
+      // verify teacher exists
+      const teacherUser = await this.userRepository.findOne({ where: { id: createClassDto.teacherId, role: UserRole.TEACHER } });
+      if (!teacherUser) throw new NotFoundException('Teacher not found');
+      teacherIdToUse = createClassDto.teacherId;
+    } else {
+      throw new ForbiddenException('Only teachers or academy owners can create classes');
     }
 
     // Validate academy if it's an academy class
-    if (createClassDto.type === ClassType.ACADEMY && createClassDto.academyId) {
+    if (createClassDto.type === ClassType.ACADEMY) {
+      if (!createClassDto.academyId) {
+        throw new BadRequestException('academyId is required for academy class');
+      }
       const academy = await this.academyRepository.findOne({
         where: { id: createClassDto.academyId, isDeleted: false },
       });
-
-      if (!academy) {
-        throw new NotFoundException('Academy not found');
+      if (!academy) throw new NotFoundException('Academy not found');
+      if (creator.role === UserRole.ACADEMY_OWNER && academy.ownerId !== creatorUserId) {
+        throw new ForbiddenException('You can only create classes for your own academy');
       }
+    }
+
+    // compatibility mapping for alternative fields
+    const title = createClassDto.title ?? createClassDto.name ?? 'Untitled Class';
+    const startTime = createClassDto.startTime ?? createClassDto.startDate;
+    const endTime = createClassDto.endTime ?? createClassDto.endDate;
+    if (!startTime || !endTime) {
+      throw new BadRequestException('startTime and endTime are required');
     }
 
     const classEntity = this.classRepository.create({
       ...createClassDto,
-      teacherId,
+      title,
+      startTime: new Date(startTime as any) as any,
+      endTime: new Date(endTime as any) as any,
+      teacherId: teacherIdToUse!,
     });
 
     return await this.classRepository.save(classEntity);

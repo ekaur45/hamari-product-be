@@ -12,6 +12,7 @@ import Performance from 'src/database/entities/performance.entity';
 import AcademyTeacher from 'src/database/entities/academy-teacher.entity';
 import ParentChild from 'src/database/entities/parent-child.entity';
 import AcademyInvitation from 'src/database/entities/academy-invitation.entity';
+import Subject from 'src/database/entities/subject.entity';
 
 const ENTITIES = [
   User,
@@ -26,6 +27,7 @@ const ENTITIES = [
   AcademyTeacher,
   ParentChild,
   AcademyInvitation,
+  Subject,
 ];
 
 @Module({

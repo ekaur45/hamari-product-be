@@ -1,13 +1,16 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import User from '../../database/entities/user.entity';
 import Class from '../../database/entities/class.entity';
 import ClassEnrollment from '../../database/entities/class-enrollment.entity';
 import Performance from '../../database/entities/performance.entity';
 import AcademyTeacher from '../../database/entities/academy-teacher.entity';
 import AcademyInvitation from '../../database/entities/academy-invitation.entity';
-import { ClassType, ClassStatus, PerformanceType, UserRole } from '../shared/enums';
+import { ClassType, ClassStatus, PerformanceType, UserRole, TeacherRole, TeacherStatus } from '../shared/enums';
+import { CreateTeacherDto } from './dto/create-teacher.dto';
+import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import Academy from 'src/database/entities/academy.entity';
 
 @Injectable()
 export class TeacherService {
@@ -24,6 +27,8 @@ export class TeacherService {
     private readonly academyTeacherRepository: Repository<AcademyTeacher>,
     @InjectRepository(AcademyInvitation)
     private readonly invitationRepository: Repository<AcademyInvitation>,
+    @InjectRepository(Academy)
+    private readonly academyRepository: Repository<Academy>,
   ) {}
 
   async getTeacherClasses(
@@ -389,5 +394,139 @@ export class TeacherService {
 
     classEntity.status = ClassStatus.COMPLETED;
     return await this.classRepository.save(classEntity);
+  }
+
+  async createTeacher(createTeacherDto: CreateTeacherDto): Promise<AcademyTeacher> {
+    // Verify user exists and is a teacher
+    const user = await this.userRepository.findOne({
+      where: { id: createTeacherDto.userId, role: UserRole.TEACHER },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found or is not a teacher');
+    }
+
+    // Check if teacher is already assigned to this academy
+    const existingTeacher = await this.academyTeacherRepository.findOne({
+      where: { 
+        academyId: createTeacherDto.academyId, 
+        teacherId: createTeacherDto.userId 
+      },
+    });
+
+    if (existingTeacher) {
+      throw new ForbiddenException('Teacher is already assigned to this academy');
+    }
+
+    // Create academy-teacher relationship
+    const academyTeacher = this.academyTeacherRepository.create({
+      academyId: createTeacherDto.academyId,
+      teacherId: createTeacherDto.userId,
+      role: createTeacherDto.role as TeacherRole || TeacherRole.TEACHER,
+      status: TeacherStatus.ACTIVE,
+      salary: createTeacherDto.salary,
+      notes: createTeacherDto.notes,
+    });
+
+    return await this.academyTeacherRepository.save(academyTeacher);
+  }
+
+  async updateTeacher(
+    academyId: string,
+    teacherId: string,
+    updateTeacherDto: UpdateTeacherDto,
+  ): Promise<AcademyTeacher> {
+    const academyTeacher = await this.academyTeacherRepository.findOne({
+      where: { academyId, teacherId },
+      relations: ['teacher', 'academy'],
+    });
+
+    if (!academyTeacher) {
+      throw new NotFoundException('Teacher not found in this academy');
+    }
+
+    // Update fields
+    if (updateTeacherDto.role) {
+      academyTeacher.role = updateTeacherDto.role as TeacherRole;
+    }
+    if (updateTeacherDto.salary !== undefined) {
+      academyTeacher.salary = updateTeacherDto.salary;
+    }
+    if (updateTeacherDto.notes !== undefined) {
+      academyTeacher.notes = updateTeacherDto.notes;
+    }
+    if (updateTeacherDto.isActive !== undefined) {
+      academyTeacher.status = updateTeacherDto.isActive ? TeacherStatus.ACTIVE : TeacherStatus.INACTIVE;
+    }
+
+    return await this.academyTeacherRepository.save(academyTeacher);
+  }
+
+  async removeTeacherFromAcademy(academyId: string, teacherId: string): Promise<void> {
+    const academyTeacher = await this.academyTeacherRepository.findOne({
+      where: { academyId, teacherId },
+    });
+
+    if (!academyTeacher) {
+      throw new NotFoundException('Teacher not found in this academy');
+    }
+
+    academyTeacher.isDeleted = true;
+    await this.academyTeacherRepository.save(academyTeacher);
+  }
+
+  async getAcademyTeachers(academyId: string): Promise<AcademyTeacher[]> {
+    return await this.academyTeacherRepository.find({
+      where: { academyId, isDeleted: false },
+      relations: ['teacher', 'academy'],
+    });
+  }
+
+  async getTeacherByAcademy(academyId: string, teacherId: string): Promise<AcademyTeacher> {
+    const academyTeacher = await this.academyTeacherRepository.findOne({
+      where: { academyId, teacherId, isDeleted: false },
+      relations: ['teacher', 'academy'],
+    });
+
+    if (!academyTeacher) {
+      throw new NotFoundException('Teacher not found in this academy');
+    }
+
+    return academyTeacher;
+  }
+
+  /**
+   * 
+   * @param page - The page number
+   * @param limit - The number of teachers per page
+   * @param search - The search query
+   * @returns The paginated list of teachers with their academy and teacher details
+   */
+
+  async getTeachers(user:User,page: number = 1, limit: number = 10, search?: string): Promise<{data:AcademyTeacher[],total: number}> {
+    const query = this.academyTeacherRepository.createQueryBuilder('academyTeacher')
+    if(user.role !== UserRole.ACADEMY_OWNER) {
+      const academy = await this.academyRepository.find({
+        where: { ownerId: user.id, isDeleted: false },
+        select: ['id'],
+      });
+      query.leftJoinAndSelect('academyTeacher.teacher', 'teacher')
+      .leftJoinAndSelect('academyTeacher.academy', 'academy')
+      .where('academyTeacher.isDeleted = :isDeleted', { isDeleted: false })
+      .andWhere('academyTeacher.academyId in (:...academyIds)', { academyIds: academy.map(a => a.id) });
+    }
+
+    if (search) {
+      query.andWhere('teacher.name LIKE :search', { search: `%${search}%` });
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [teachers, total] = await query.skip(skip).take(limit).getManyAndCount();
+    return {
+      data: teachers,
+      total
+      
+    };
   }
 }
