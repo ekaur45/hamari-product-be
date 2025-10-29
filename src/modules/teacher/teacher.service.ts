@@ -10,7 +10,9 @@ import AcademyInvitation from '../../database/entities/academy-invitation.entity
 import { ClassType, ClassStatus, PerformanceType, UserRole, TeacherRole, TeacherStatus } from '../shared/enums';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { CreateTeacherDirectDto } from './dto/create-teacher-direct.dto';
 import Academy from 'src/database/entities/academy.entity';
+import TeacherSubject from 'src/database/entities/teacher-subject.entity';
 
 @Injectable()
 export class TeacherService {
@@ -29,6 +31,8 @@ export class TeacherService {
     private readonly invitationRepository: Repository<AcademyInvitation>,
     @InjectRepository(Academy)
     private readonly academyRepository: Repository<Academy>,
+    @InjectRepository(TeacherSubject)
+    private readonly teacherSubjectRepository: Repository<TeacherSubject>,
   ) {}
 
   async getTeacherClasses(
@@ -71,6 +75,43 @@ export class TeacherService {
         name: classEntity.academy.name,
       } : null,
     }));
+  }
+
+  async getMySubjects(teacherId: string) {
+    const rows = await this.teacherSubjectRepository.find({
+      where: { teacherId, isDeleted: false },
+      relations: ['subject'],
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      subjectId: r.subjectId,
+      subjectName: r.subject?.name,
+      fee: r.fee,
+    }));
+  }
+
+  async addMySubject(teacherId: string, payload: { subjectId: string; fee?: number }) {
+    const exists = await this.teacherSubjectRepository.findOne({ where: { teacherId, subjectId: payload.subjectId, isDeleted: false } });
+    if (exists) {
+      throw new ForbiddenException('Subject already added');
+    }
+    const row = this.teacherSubjectRepository.create({ teacherId, subjectId: payload.subjectId, fee: payload.fee ?? null });
+    return await this.teacherSubjectRepository.save(row);
+  }
+
+  async updateMySubject(teacherId: string, id: string, payload: { fee?: number }) {
+    const row = await this.teacherSubjectRepository.findOne({ where: { id, teacherId, isDeleted: false } });
+    if (!row) throw new NotFoundException('Subject not found');
+    row.fee = payload.fee ?? row.fee;
+    return await this.teacherSubjectRepository.save(row);
+  }
+
+  async removeMySubject(teacherId: string, id: string) {
+    const row = await this.teacherSubjectRepository.findOne({ where: { id, teacherId, isDeleted: false } });
+    if (!row) throw new NotFoundException('Subject not found');
+    row.isDeleted = true;
+    await this.teacherSubjectRepository.save(row);
+    return { success: true };
   }
 
   async getTeacherStudents(teacherId: string, classId?: string): Promise<any[]> {
@@ -429,6 +470,65 @@ export class TeacherService {
     });
 
     return await this.academyTeacherRepository.save(academyTeacher);
+  }
+
+  async createTeacherDirect(
+    createTeacherDirectDto: CreateTeacherDirectDto,
+    academyOwnerId: string,
+  ): Promise<{ user: User; academyTeacher: AcademyTeacher }> {
+    // Verify academy exists and user is the owner
+    const academy = await this.academyRepository.findOne({
+      where: { id: createTeacherDirectDto.academyId, ownerId: academyOwnerId },
+    });
+
+    if (!academy) {
+      throw new NotFoundException('Academy not found or you are not the owner');
+    }
+
+    // Check if email already exists
+    const existingUser = await this.userRepository.findOne({
+      where: { email: createTeacherDirectDto.email },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('User with this email already exists');
+    }
+
+    // Check if username already exists
+    const existingUsername = await this.userRepository.findOne({
+      where: { username: createTeacherDirectDto.username },
+    });
+
+    if (existingUsername) {
+      throw new BadRequestException('Username already taken');
+    }
+
+    // Create user account
+    const user = this.userRepository.create({
+      firstName: createTeacherDirectDto.firstName,
+      lastName: createTeacherDirectDto.lastName,
+      email: createTeacherDirectDto.email,
+      username: createTeacherDirectDto.username,
+      password: createTeacherDirectDto.password, // In production, hash this password
+      role: UserRole.TEACHER,
+      isActive: true,
+    });
+
+    const savedUser = await this.userRepository.save(user);
+
+    // Create academy-teacher relationship
+    const academyTeacher = this.academyTeacherRepository.create({
+      academyId: createTeacherDirectDto.academyId,
+      teacherId: savedUser.id,
+      role: TeacherRole.TEACHER,
+      status: TeacherStatus.ACTIVE,
+      salary: createTeacherDirectDto.salary,
+      notes: createTeacherDirectDto.notes,
+    });
+
+    const savedAcademyTeacher = await this.academyTeacherRepository.save(academyTeacher);
+
+    return { user: savedUser, academyTeacher: savedAcademyTeacher };
   }
 
   async updateTeacher(

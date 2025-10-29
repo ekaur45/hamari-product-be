@@ -24,9 +24,25 @@ import { CreatePerformanceDto } from '../performance/dto/create-performance.dto'
 import { UpdatePerformanceDto } from '../performance/dto/update-performance.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
+import { CreateTeacherDirectDto } from './dto/create-teacher-direct.dto';
 import { ClassType, ClassStatus, PerformanceType } from '../shared/enums';
 import AcademyTeacher from 'src/database/entities/academy-teacher.entity';
 import User from 'src/database/entities/user.entity';
+import { IsNumber, IsOptional, IsUUID } from 'class-validator';
+
+class UpsertTeacherSubjectDto {
+  @IsUUID('4')
+  subjectId: string;
+  @IsOptional()
+  @IsNumber()
+  fee?: number;
+}
+
+class UpdateTeacherSubjectDto {
+  @IsOptional()
+  @IsNumber()
+  fee?: number;
+}
 
 
 
@@ -257,6 +273,33 @@ export class TeacherController {
     return ApiResponseModel.success(classEntity, 'Class completed successfully');
   }
 
+  // Teacher subjects (what they can teach) with optional fee per subject
+  @Get('my-subjects')
+  async getMySubjects(@Request() req: { user: { id: string } }) {
+    const data = await this.teacherService.getMySubjects(req.user.id);
+    return ApiResponseModel.success(data, 'Subjects retrieved successfully');
+  }
+
+  @Post('my-subjects')
+  @ApiBody({ type: UpsertTeacherSubjectDto })
+  async addMySubject(@Request() req: { user: { id: string } }, @Body() body: UpsertTeacherSubjectDto) {
+    const created = await this.teacherService.addMySubject(req.user.id, body);
+    return ApiResponseModel.success(created, 'Subject added');
+  }
+
+  @Put('my-subjects/:id')
+  @ApiBody({ type: UpdateTeacherSubjectDto })
+  async updateMySubject(@Request() req: { user: { id: string } }, @Param('id') id: string, @Body() body: UpdateTeacherSubjectDto) {
+    const updated = await this.teacherService.updateMySubject(req.user.id, id, body);
+    return ApiResponseModel.success(updated, 'Subject updated');
+  }
+
+  @Delete('my-subjects/:id')
+  async removeMySubject(@Request() req: { user: { id: string } }, @Param('id') id: string) {
+    await this.teacherService.removeMySubject(req.user.id, id);
+    return ApiResponseModel.success(true, 'Subject removed');
+  }
+
   @Post()
   @ApiBody({ type: CreateTeacherDto })
   @ApiResponse({
@@ -269,6 +312,27 @@ export class TeacherController {
   ): Promise<ApiResponseModel<any>> {
     const teacher = await this.teacherService.createTeacher(createTeacherDto);
     return ApiResponseModel.success(teacher, 'Teacher created successfully');
+  }
+
+  @Post('direct')
+  @ApiBody({ type: CreateTeacherDirectDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Teacher created directly and assigned to academy',
+    type: ApiResponseModel,
+  })
+  async createTeacherDirect(
+    @Body() createTeacherDirectDto: CreateTeacherDirectDto,
+    @Request() req: { user: { id: string } },
+  ): Promise<ApiResponseModel<{ user: User; academyTeacher: AcademyTeacher }>> {
+    const result = await this.teacherService.createTeacherDirect(
+      createTeacherDirectDto,
+      req.user.id,
+    );
+    return ApiResponseModel.success(
+      result,
+      'Teacher created and assigned to academy successfully',
+    );
   }
 
   @Get('academy/:academyId')

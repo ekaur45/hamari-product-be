@@ -12,6 +12,7 @@ import Academy from '../../database/entities/academy.entity';
 import ClassEnrollment from '../../database/entities/class-enrollment.entity';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
+import { CreateRecurringClassDto } from './dto/create-recurring-class.dto';
 import { ClassType, ClassStatus, UserRole } from '../shared/enums';
 
 @Injectable()
@@ -81,6 +82,81 @@ export class ClassService {
     });
 
     return await this.classRepository.save(classEntity);
+  }
+
+  async createRecurringClasses(
+    createRecurringClassDto: CreateRecurringClassDto,
+    creatorUserId: string,
+  ): Promise<Class[]> {
+    const creator = await this.userRepository.findOne({ where: { id: creatorUserId } });
+    if (!creator) throw new NotFoundException('User not found');
+
+    if (creator.role !== UserRole.ACADEMY_OWNER) {
+      throw new ForbiddenException('Only academy owners can create recurring classes');
+    }
+
+    // Validate academy if it's an academy class
+    if (createRecurringClassDto.type === ClassType.ACADEMY) {
+      if (!createRecurringClassDto.academyId) {
+        throw new BadRequestException('academyId is required for academy class');
+      }
+      const academy = await this.academyRepository.findOne({
+        where: { id: createRecurringClassDto.academyId, isDeleted: false },
+      });
+      if (!academy) throw new NotFoundException('Academy not found');
+      if (academy.ownerId !== creatorUserId) {
+        throw new ForbiddenException('You can only create classes for your own academy');
+      }
+    }
+
+    // Validate teacher exists
+    const teacher = await this.userRepository.findOne({
+      where: { id: createRecurringClassDto.teacherId, role: UserRole.TEACHER },
+    });
+    if (!teacher) throw new NotFoundException('Teacher not found');
+
+    const startDate = new Date(createRecurringClassDto.startDate);
+    const endDate = new Date(createRecurringClassDto.endDate);
+    const classes: Class[] = [];
+
+    // Generate classes for each day in the date range
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'lowercase' });
+      
+      if (createRecurringClassDto.daysOfWeek.includes(dayName)) {
+        // Create class for this day
+        const classStartTime = new Date(currentDate);
+        const [hours, minutes] = createRecurringClassDto.startTime.split(':').map(Number);
+        classStartTime.setHours(hours, minutes, 0, 0);
+
+        const classEndTime = new Date(currentDate);
+        const [endHours, endMinutes] = createRecurringClassDto.endTime.split(':').map(Number);
+        classEndTime.setHours(endHours, endMinutes, 0, 0);
+
+        const classEntity = this.classRepository.create({
+          title: `${createRecurringClassDto.title} - ${currentDate.toLocaleDateString()}`,
+          description: createRecurringClassDto.description,
+          type: createRecurringClassDto.type,
+          startTime: classStartTime,
+          endTime: classEndTime,
+          maxStudents: createRecurringClassDto.maxStudents || 30,
+          fee: createRecurringClassDto.fee,
+          location: createRecurringClassDto.location,
+          meetingLink: createRecurringClassDto.meetingLink,
+          teacherId: createRecurringClassDto.teacherId,
+          academyId: createRecurringClassDto.academyId,
+          status: ClassStatus.SCHEDULED,
+        });
+
+        classes.push(classEntity);
+      }
+
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return await this.classRepository.save(classes);
   }
 
   async getClasses(filters: {

@@ -23,6 +23,7 @@ import Class from '../../database/entities/class.entity';
 import { ClassService } from './class.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
+import { CreateRecurringClassDto } from './dto/create-recurring-class.dto';
 import { ClassType, ClassStatus } from '../shared/enums';
 
 @ApiTags('Class')
@@ -48,6 +49,24 @@ export class ClassController {
       req.user.id,
     );
     return ApiResponseModel.success(classEntity, 'Class created successfully');
+  }
+
+  @Post('recurring')
+  @ApiBody({ type: CreateRecurringClassDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Recurring classes created successfully',
+    type: ApiResponseModel,
+  })
+  async createRecurringClasses(
+    @Body() createRecurringClassDto: CreateRecurringClassDto,
+    @Request() req: { user: { id: string } },
+  ): Promise<ApiResponseModel<Class[]>> {
+    const classes = await this.classService.createRecurringClasses(
+      createRecurringClassDto,
+      req.user.id,
+    );
+    return ApiResponseModel.success(classes, 'Recurring classes created successfully');
   }
 
   @Get()

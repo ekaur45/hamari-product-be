@@ -77,4 +77,13 @@ export class CreateAcademyDto {
   @IsNumber({}, { message: 'Individual class fee must be a number' })
   @Min(0, { message: 'Individual class fee must be non-negative' })
   individualClassFee?: number;
+
+  @ApiProperty({
+    description: 'Academy logo URL or base64 string',
+    example: 'https://example.com/logo.png',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'Logo must be a string' })
+  logo?: string;
 }

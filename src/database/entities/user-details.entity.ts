@@ -30,6 +30,9 @@ export default class UserDetail {
   @Column({ type: 'text', nullable: true })
   bio?: string;
 
+  @Column({ type: 'text', nullable: true })
+  skills?: string; // comma-separated optional skills for teachers
+
   // Relations moved to dedicated tables
 
   @OneToOne(() => User, (user) => user.details)
