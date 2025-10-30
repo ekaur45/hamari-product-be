@@ -122,7 +122,9 @@ export class ClassService {
     // Generate classes for each day in the date range
     const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
-      const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'lowercase' });
+      const dayName = currentDate
+        .toLocaleDateString('en-US', { weekday: 'long' })
+        .toLowerCase();
       
       if (createRecurringClassDto.daysOfWeek.includes(dayName)) {
         // Create class for this day
