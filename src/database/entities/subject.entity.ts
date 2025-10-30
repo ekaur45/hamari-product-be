@@ -5,8 +5,12 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
+  JoinTable,
+  JoinColumn,
 } from 'typeorm';
 import Academy from './academy.entity';
+import TeacherSubject from './teacher-subject.entity';
 
 @Entity('subjects')
 export default class Subject {
@@ -19,10 +23,11 @@ export default class Subject {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'uuid' })
+
+  @Column({ type: 'uuid', nullable: true })
   academyId: string;
 
-  @ManyToOne(() => Academy, (academy) => academy.id)
+  @ManyToOne(() => Academy, (academy) => academy.id, { nullable: true })
   academy: Academy;
 
   @CreateDateColumn()
@@ -33,6 +38,11 @@ export default class Subject {
 
   @Column({ default: false })
   isDeleted: boolean;
+
+
+  @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.subject)
+  @JoinColumn({ name: 'id' })
+  teacherSubjects: TeacherSubject[];
 }
 
 

@@ -6,9 +6,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Unique,
+  JoinColumn,
 } from 'typeorm';
 import User from './user.entity';
 import Subject from './subject.entity';
+import { Teacher } from './teacher.entity';
 
 @Entity('teacher_subjects')
 @Unique(['teacherId', 'subjectId'])
@@ -39,6 +41,14 @@ export default class TeacherSubject {
 
   @Column({ default: false })
   isDeleted: boolean;
+
+  @ManyToOne(() => User, (user) => user.subjects)
+  @JoinColumn({ name: 'teacherId' })
+  user: User;
+
+  @ManyToOne(() => Subject, (subject) => subject.teacherSubjects)
+  @JoinColumn({ name: 'subjectId' })
+  teacherSubjects: Subject;
 }
 
 

@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { And, Between, Not, Repository } from 'typeorm';
 import User from '../../database/entities/user.entity';
 import Class from '../../database/entities/class.entity';
 import ClassEnrollment from '../../database/entities/class-enrollment.entity';
 import Performance from '../../database/entities/performance.entity';
 import Payment from '../../database/entities/payment.entity';
 import { ClassType, ClassStatus, EnrollmentStatus, UserRole } from '../shared/enums';
+import UserAvailability from '../../database/entities/user-availability.entity';
 
 @Injectable()
 export class StudentService {
@@ -21,6 +22,8 @@ export class StudentService {
     private readonly performanceRepository: Repository<Performance>,
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
+    @InjectRepository(UserAvailability)
+    private readonly availabilityRepository: Repository<UserAvailability>,
   ) {}
 
   async getStudentClasses(
@@ -72,6 +75,69 @@ export class StudentService {
         name: classEntity.academy.name,
       } : null,
     }));
+  }
+
+  async bookTeacher(
+    studentId: string,
+    payload: { teacherId: string; date: string; startTime: string; endTime: string; subject?: string },
+  ): Promise<any> {
+    const teacher = await this.userRepository.findOne({ where: { id: payload.teacherId, role: UserRole.TEACHER } });
+    if (!teacher) throw new NotFoundException('Teacher not found');
+
+    const student = await this.userRepository.findOne({ where: { id: studentId, role: UserRole.STUDENT } });
+    if (!student) throw new NotFoundException('Student not found');
+
+    const date = new Date(payload.date);
+    if (isNaN(date.getTime())) throw new BadRequestException('Invalid date');
+    const dayOfWeek = date.getDay();
+
+    // Validate availability covers requested time
+    const slot = await this.availabilityRepository.findOne({ where: { userId: payload.teacherId, dayOfWeek } });
+    if (!slot) throw new BadRequestException('Teacher is not available on this day');
+    const within = (t: string) => t >= slot.startTime && t <= slot.endTime;
+    if (!within(payload.startTime) || !within(payload.endTime) || payload.startTime >= payload.endTime) {
+      throw new BadRequestException('Requested time is outside availability');
+    }
+
+    // Check teacher has no overlapping classes
+    const startDate = new Date(`${payload.date}T${payload.startTime}:00`);
+    const endDate = new Date(`${payload.date}T${payload.endTime}:00`);
+    const overlap = await this.classRepository.createQueryBuilder('c')
+      .where('c.teacherId = :teacherId', { teacherId: payload.teacherId })
+      .andWhere('c.isDeleted = false')
+      .andWhere('(c.startTime < :end AND c.endTime > :start)', { start: startDate, end: endDate })
+      .getCount();
+    if (overlap > 0) {
+      throw new BadRequestException('Teacher has another class during this time');
+    }
+
+    // Create individual class
+    const classEntity = this.classRepository.create({
+      title: `1:1 with ${student.firstName} ${student.lastName}`,
+      description: payload.subject ? `Subject: ${payload.subject}` : null,
+      type: ClassType.INDIVIDUAL,
+      startTime: startDate as any,
+      endTime: endDate as any,
+      maxStudents: 1,
+      fee: null,
+      location: null,
+      meetingLink: null,
+      teacherId: payload.teacherId,
+      academyId: null,
+      status: ClassStatus.SCHEDULED,
+    } as any);
+    const savedClass = await this.classRepository.save(classEntity);
+
+    // Create enrollment for student
+    const enrollment = this.enrollmentRepository.create({
+      studentId,
+      classId: savedClass[0].id,
+      status: EnrollmentStatus.PENDING,
+      paidAmount: 0,
+    } as any);
+    const savedEnrollment = await this.enrollmentRepository.save(enrollment);
+
+    return { class: savedClass, enrollment: savedEnrollment };
   }
 
   async getStudentEnrollments(studentId: string): Promise<any[]> {

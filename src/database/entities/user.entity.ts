@@ -4,10 +4,15 @@ import {
   OneToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  JoinTable,
+  JoinColumn,
 } from 'typeorm';
 import UserDetail from './user-details.entity';
 import { UserRole } from '../../modules/shared/enums';
 import AcademyInvitation from './academy-invitation.entity';
+import UserAvailability from './user-availability.entity';
+import { Teacher } from './teacher.entity';
+import TeacherSubject from './teacher-subject.entity';
 
 @Entity('users')
 export default class User {
@@ -83,4 +88,17 @@ export default class User {
 
   @OneToMany('AcademyInvitation', 'invitedBy')
   sentInvitations: any[];
+
+
+  @OneToMany(() => UserAvailability, (availability) => availability.user)
+  @JoinTable()
+  availability: UserAvailability[];
+
+  @OneToOne(() => Teacher, (teacher) => teacher.user)
+  @JoinColumn({ name: 'id' })
+  teacher: Teacher;
+
+  @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.user)
+  @JoinColumn({ name: 'id' })
+  subjects: TeacherSubject[];
 }

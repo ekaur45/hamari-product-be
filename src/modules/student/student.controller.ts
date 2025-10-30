@@ -141,5 +141,16 @@ export class StudentController {
     await this.studentService.unenrollFromClass(req.user.id, enrollmentId);
     return ApiResponseModel.success(undefined, 'Student unenrolled from class successfully');
   }
+
+  @Post('book-teacher')
+  @ApiBody({ schema: { properties: { teacherId: { type: 'string' }, date: { type: 'string', example: '2025-10-30' }, startTime: { type: 'string', example: '10:00' }, endTime: { type: 'string', example: '11:00' }, subject: { type: 'string' } }, required: ['teacherId', 'date', 'startTime', 'endTime'] } })
+  @ApiResponse({ status: 200, description: 'Teacher booked successfully', type: ApiResponseModel })
+  async bookTeacher(
+    @Body() body: { teacherId: string; date: string; startTime: string; endTime: string; subject?: string },
+    @Request() req: { user: { id: string } },
+  ): Promise<ApiResponseModel<any>> {
+    const result = await this.studentService.bookTeacher(req.user.id, body);
+    return ApiResponseModel.success(result, 'Teacher booked successfully');
+  }
 }
 

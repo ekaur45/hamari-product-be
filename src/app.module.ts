@@ -14,6 +14,7 @@ import { InvitationModule } from './modules/invitation/invitation.module';
 import { StudentModule } from './modules/student/student.module';
 import { TeacherModule } from './modules/teacher/teacher.module';
 import { SubjectModule } from './modules/subject/subject.module';
+import { DiscoverModule } from './modules/discover/discover.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -50,6 +51,7 @@ import { SubjectModule } from './modules/subject/subject.module';
     StudentModule,
     TeacherModule,
     SubjectModule,
+    DiscoverModule,
   ],
   controllers: [],
   providers: [],
