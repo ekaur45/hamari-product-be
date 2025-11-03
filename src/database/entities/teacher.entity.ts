@@ -1,27 +1,67 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, UpdateDateColumn, CreateDateColumn, OneToMany } from 'typeorm';
 import User from './user.entity';
+import TeacherSubject from './teacher-subject.entity';
+import Availability from './availablility.entity';
+import ClassEntity from './classes.entity';
+import TeacherBooking from './teacher-booking.entity';
 
 @Entity('teachers')
 export class Teacher {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column({ type: 'uuid' })
   userId: string;
 
-  @Column()
-  name: string;
+  @OneToOne(() => User, (user) => user.id)
+  @JoinColumn()
+  user: User;
 
-  @Column()
-  subject: string;
+  @Column({ nullable: true })
+  tagline: string;
 
-  @Column()
-  email: string;
+  @Column({ nullable: true })
+  yearsOfExperience: number;
+
+  @Column({ nullable: true })
+  preferredSubject: string;
+
+  @Column({ nullable: true })
+  specialization: string;
+
+  @Column({ nullable: true })
+  hourlyRate: number;
+
+  @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.teacher)
+  teacherSubjects: TeacherSubject[];
+
+  // Array of Availability objects
+  @OneToMany(() => Availability, (availability) => availability.teacher)
+  availabilities: Availability[];
+
+  @Column({ default: true })
+  isVerified: boolean;
+
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+
+  @Column({
+    type: 'timestamp',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt?: Date;
+
+  @Column({ default: false })
+  isDeleted: boolean;
   
-  @OneToOne(() => User, (user) => user.teacher)
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  @OneToMany(() => ClassEntity, (classEntity) => classEntity.teacher)
+  classes: ClassEntity[];
+
+  @OneToMany(() => TeacherBooking, (teacherBooking) => teacherBooking.teacher)
+  teacherBookings: TeacherBooking[];
 }

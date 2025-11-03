@@ -7,15 +7,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import User from '../../database/entities/user.entity';
 import UserDetail from '../../database/entities/user-details.entity';
-import UserEducation, { EducationType } from '../../database/entities/user-education.entity';
-import UserAvailability from '../../database/entities/user-availability.entity';
+import UserEducation from '../../database/entities/user-education.entity';
 import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
-import { EducationItem, AvailabilitySlot } from './types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRole } from '../shared/enums';
 import * as bcrypt from 'bcrypt';
+import TeacherSubject from 'src/database/entities/teacher-subject.entity';
+import Subject from 'src/database/entities/subject.entity';
 
 @Injectable()
 export default class UserService {
@@ -26,8 +25,10 @@ export default class UserService {
     private readonly userDetailRepository: Repository<UserDetail>,
     @InjectRepository(UserEducation)
     private readonly userEducationRepository: Repository<UserEducation>,
-    @InjectRepository(UserAvailability)
-    private readonly userAvailabilityRepository: Repository<UserAvailability>,
+    @InjectRepository(Subject)
+    private readonly subjectRepository: Repository<Subject>,
+    @InjectRepository(TeacherSubject)
+    private readonly teacherSubjectRepository: Repository<TeacherSubject>,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -130,18 +131,6 @@ export default class UserService {
     await this.userEducationRepository.delete({ id: eduId, userId });
   }
 
-  async getAvailability(userId: string): Promise<{ slots: UserAvailability[] }> {
-    const slots = await this.userAvailabilityRepository.find({ where: { userId } });
-    return { slots };
-  }
-
-  async updateAvailability(userId: string, payload: { slots: { dayOfWeek: number; startTime: string; endTime: string; notes?: string }[] }): Promise<{ slots: UserAvailability[] }> {
-    // Simple replace strategy
-    await this.userAvailabilityRepository.delete({ userId });
-    const toSave = payload.slots.map((s) => this.userAvailabilityRepository.create({ userId, ...s }));
-    const saved = await this.userAvailabilityRepository.save(toSave);
-    return { slots: saved };
-  }
 
   async updateAvatar(userId: string, avatarUrl: string): Promise<UserDetail> {
     const details = await this.getOrCreateDetails(userId);
@@ -235,5 +224,23 @@ export default class UserService {
 
     const { password, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword;
+  }
+
+
+  async addSubjectAndAssignToTeacher(userId: string, subjectName: string): Promise<void> {
+    const user = await this.getUserById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    if (user.role !== UserRole.TEACHER) throw new ForbiddenException('User is not a teacher');
+    // const subject = await this.subjectRepository.findOne({ where: { name: subjectName } });
+    // if (!subject) throw new NotFoundException('Subject not found');
+    const subject = await this.subjectRepository.save(this.subjectRepository.create({ name: subjectName }));
+    const teacherSubject = await this.teacherSubjectRepository.create({ teacherId: user.id, subjectId: subject.id });
+    await this.teacherSubjectRepository.save(teacherSubject);
+  }
+  async getSubjects(userId: string): Promise<TeacherSubject[]> {
+    const user = await this.getUserById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    if (user.role !== UserRole.TEACHER) throw new ForbiddenException('User is not a teacher');
+    return await this.teacherSubjectRepository.find({ where: { teacherId: user.id }, relations: ['subject'] });
   }
 }

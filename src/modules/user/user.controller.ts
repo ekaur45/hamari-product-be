@@ -71,18 +71,7 @@ export default class UserController {
     return ApiResponseModel.success(null, 'Education deleted');
   }
 
-  // Availability
-  @Get(':id/availability')
-  async getAvailability(@Param('id') id: string) {
-    const res = await this.userService.getAvailability(id);
-    return ApiResponseModel.success(res, 'Availability fetched');
-  }
 
-  @Put(':id/availability')
-  async updateAvailability(@Param('id') id: string, @Body() body: any) {
-    const res = await this.userService.updateAvailability(id, body);
-    return ApiResponseModel.success(res, 'Availability updated');
-  }
 
   // Avatar upload (expects multipart/form-data with field 'file')
   @Post(':id/avatar')
@@ -205,5 +194,17 @@ export default class UserController {
   ): Promise<ApiResponseModel<Omit<User, 'password'>>> {
     const user = await this.userService.deactivateUser(id, req.user.id);
     return ApiResponseModel.success(user, 'User deactivated successfully');
+  }
+
+  @Post(':id/add-subject-and-assign-to-teacher')
+  async addSubjectAndAssignToTeacher(@Param('id') id: string, @Body() body: any) {
+    const res = await this.userService.addSubjectAndAssignToTeacher(id, body.subjectName);
+    return ApiResponseModel.success(res, 'Subject assigned to teacher successfully');
+  } 
+
+  @Get(':id/subjects')
+  async getSubjects(@Param('id') id: string) {
+    const res = await this.userService.getSubjects(id);
+    return ApiResponseModel.success(res, 'Subjects retrieved successfully');
   }
 }

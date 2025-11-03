@@ -6,12 +6,15 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Unique,
+  JoinColumn,
 } from 'typeorm';
 import User from './user.entity';
 import {
   RelationshipType,
   RelationshipStatus,
 } from '../../modules/shared/enums';
+import { Parent } from './parent.entity';
+import { Student } from './student.entity';
 
 @Entity('parent_children')
 @Unique(['parentId', 'childId'])
@@ -22,37 +25,25 @@ export default class ParentChild {
   @Column({ type: 'uuid' })
   parentId: string;
 
-  @ManyToOne(() => User, (user) => user.children)
-  parent: User;
+  @ManyToOne(() => Parent, (parent) => parent.children)
+  @JoinColumn()
+  parent: Parent;
 
   @Column({ type: 'uuid' })
   childId: string;
 
-  @ManyToOne(() => User, (user) => user.parents)
-  child: User;
+  @ManyToOne(() => Student, (student) => student.id)
+  @JoinColumn()
+  child: Student;
 
-  @Column({
-    type: 'enum',
-    enum: RelationshipType,
-  })
-  relationshipType: RelationshipType;
-
-  @Column({
-    type: 'enum',
-    enum: RelationshipStatus,
-    default: RelationshipStatus.ACTIVE,
-  })
-  status: RelationshipStatus;
-
-  @Column({ type: 'text', nullable: true })
-  notes: string;
-
-  @CreateDateColumn()
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-
-  @UpdateDateColumn()
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
-
   @Column({ default: false })
   isDeleted: boolean;
 }

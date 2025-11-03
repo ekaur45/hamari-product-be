@@ -9,10 +9,12 @@ import {
 } from 'typeorm';
 import UserDetail from './user-details.entity';
 import { UserRole } from '../../modules/shared/enums';
-import AcademyInvitation from './academy-invitation.entity';
-import UserAvailability from './user-availability.entity';
+import Academy from './academy.entity';
+import UserEducation from './user-education.entity';
+import { Student } from './student.entity';
 import { Teacher } from './teacher.entity';
-import TeacherSubject from './teacher-subject.entity';
+import { Parent } from './parent.entity';
+
 
 @Entity('users')
 export default class User {
@@ -51,54 +53,22 @@ export default class User {
   isDeleted: boolean;
 
   @OneToOne(() => UserDetail, (userDetail) => userDetail.user)
-  details: UserDetail;
+  @JoinColumn()
+  details?: UserDetail;
 
-  // Academy relationships
-  @OneToMany('Academy', 'owner')
-  ownedAcademies: any[];
-
-  @OneToMany('AcademyTeacher', 'teacher')
-  academyRoles: any[];
-
-  // Class relationships
-  @OneToMany('Class', 'teacher')
-  taughtClasses: any[];
-
-  @OneToMany('ClassEnrollment', 'student')
-  enrollments: any[];
-
-  // Payment relationships
-  @OneToMany('Payment', 'payer')
-  payments: any[];
-
-  // Performance relationships
-  @OneToMany('Performance', 'student')
-  performances: any[];
-
-  // Parent-Child relationships
-  @OneToMany('ParentChild', 'parent')
-  children: any[];
-
-  @OneToMany('ParentChild', 'child')
-  parents: any[];
-
-  // Invitation relationships
-  @OneToMany('AcademyInvitation', 'invitedTeacher')
-  receivedInvitations: AcademyInvitation[];
-
-  @OneToMany('AcademyInvitation', 'invitedBy')
-  sentInvitations: any[];
+  @OneToMany(() => UserEducation, (userEducation) => userEducation.user)
+  educations?: UserEducation[] | null;
 
 
-  @OneToMany(() => UserAvailability, (availability) => availability.user)
-  @JoinTable()
-  availability: UserAvailability[];
+  @OneToMany(() => Academy, (academy) => academy.owner)
+  ownedAcademies?: Academy[] | null;
+
+  @OneToOne(() => Student, (student) => student.user)
+  student?: Student | null;
 
   @OneToOne(() => Teacher, (teacher) => teacher.user)
-  @JoinColumn({ name: 'id' })
-  teacher: Teacher;
+  teacher?: Teacher | null;
 
-  @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.user)
-  @JoinColumn({ name: 'id' })
-  subjects: TeacherSubject[];
+  @OneToOne(() => Parent, (parent) => parent.user)
+  parent?: Parent | null;
 }

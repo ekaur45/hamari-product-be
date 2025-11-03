@@ -55,10 +55,10 @@ export enum PerformanceType {
 
 // Academy Teacher Enums
 export enum TeacherRole {
-  TEACHER = 'teacher',
-  SENIOR_TEACHER = 'senior_teacher',
-  HEAD_TEACHER = 'head_teacher',
-  ADMIN = 'admin',
+  TEACHER = 'Teacher',
+  SENIOR_TEACHER = 'Senior Teacher',
+  HEAD_TEACHER = 'Head Teacher',
+  ADMIN = 'Admin',
 }
 
 export enum TeacherStatus {
@@ -99,4 +99,33 @@ export enum UserRole {
   STUDENT = 'Student',
   ACADEMY_OWNER = 'Academy Owner',
   OTHER = 'Other',
+}
+
+export enum BookingStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  CANCELLED = 'cancelled',
+  COMPLETED = 'completed',
+}
+
+export enum MonthOfYear {
+  JANUARY = 'January',
+  FEBRUARY = 'February',
+  MARCH = 'March',
+  APRIL = 'April',
+  MAY = 'May',
+  JUNE = 'June',
+  JULY = 'July',
+  AUGUST = 'August',
+  SEPTEMBER = 'September',
+  OCTOBER = 'October',
+  NOVEMBER = 'November',
+  DECEMBER = 'December',
+}
+
+export enum AttendanceStatus {
+  PRESENT = 'present',
+  ABSENT = 'absent',
+  LEAVE = 'leave',
+  EXCUSED = 'excused',
 }

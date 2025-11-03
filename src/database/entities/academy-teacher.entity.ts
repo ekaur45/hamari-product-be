@@ -6,9 +6,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Unique,
+  JoinColumn,
 } from 'typeorm';
-import User from './user.entity';
 import { TeacherRole, TeacherStatus } from '../../modules/shared/enums';
+import { Teacher } from './teacher.entity';
 
 @Entity('academy_teachers')
 @Unique(['academyId', 'teacherId'])
@@ -25,8 +26,9 @@ export default class AcademyTeacher {
   @Column({ type: 'uuid' })
   teacherId: string;
 
-  @ManyToOne(() => User, (user) => user.academyRoles)
-  teacher: User;
+  @ManyToOne(() => Teacher, (teacher) => teacher.id)
+  @JoinColumn()
+  teacher: Teacher;
 
   @Column({
     type: 'enum',
@@ -48,10 +50,10 @@ export default class AcademyTeacher {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @CreateDateColumn()
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
   @Column({ default: false })

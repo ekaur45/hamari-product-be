@@ -1,16 +1,11 @@
 import {
   Column,
   Entity,
-  ManyToOne,
   PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   OneToMany,
-  JoinTable,
-  JoinColumn,
 } from 'typeorm';
-import Academy from './academy.entity';
 import TeacherSubject from './teacher-subject.entity';
+import ClassEntity from './classes.entity';
 
 @Entity('subjects')
 export default class Subject {
@@ -24,25 +19,26 @@ export default class Subject {
   description: string;
 
 
-  @Column({ type: 'uuid', nullable: true })
-  academyId: string;
-
-  @ManyToOne(() => Academy, (academy) => academy.id, { nullable: true })
-  academy: Academy;
-
-  @CreateDateColumn()
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
 
   @Column({ default: false })
   isDeleted: boolean;
 
 
+  @OneToMany(() => ClassEntity, (classEntity) => classEntity.subject)
+  classEntities: ClassEntity[];
+
   @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.subject)
-  @JoinColumn({ name: 'id' })
   teacherSubjects: TeacherSubject[];
+
 }
 
 

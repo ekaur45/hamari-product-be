@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import User from './user.entity';
 import { AcademyStatus } from '../../modules/shared/enums';
+import AcademyTeacher from './academy-teacher.entity';
 
 @Entity('academies')
 export default class Academy {
@@ -30,10 +31,9 @@ export default class Academy {
   @Column({ length: 100, nullable: true })
   email: string;
 
-  @Column({ length: 200, nullable: true })
-  website: string;
 
-  @Column({ type: 'text', nullable: true })
+
+  @Column({ length: 255, nullable: true, type: 'varchar' })
   logo: string;
 
   @Column({
@@ -55,14 +55,14 @@ export default class Academy {
   @ManyToOne(() => User, (user) => user.ownedAcademies)
   owner: User;
 
-  @OneToMany('Class', 'academy')
-  classes: any[];
+  // @OneToMany('Class', 'academy')
+  // classes: any[];
 
   @OneToMany('AcademyTeacher', 'academy')
-  teachers: any[];
+  teachers: AcademyTeacher[];
 
-  @OneToMany('AcademyInvitation', 'academy')
-  invitations: any[];
+  // @OneToMany('AcademyInvitation', 'academy')
+  // invitations: any[];
 
   @CreateDateColumn()
   createdAt: Date;

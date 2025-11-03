@@ -4,7 +4,12 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  JoinColumn,
+  OneToOne,
+  OneToMany,
 } from 'typeorm';
+import User from './user.entity';
+import ParentChild from './parent-child.entity';
 
 @Entity('parents')
 export class Parent {
@@ -14,27 +19,23 @@ export class Parent {
   @Column({ type: 'uuid' })
   userId: string;
 
-  @Column({ length: 100 })
-  firstName: string;
+  @OneToOne(() => User, (user) => user.parent)
+  @JoinColumn()
+  user: User;
 
-  @Column({ length: 100 })
-  lastName: string;
+  
 
-  @Column({ unique: true })
-  email: string;
+  @OneToMany(() => ParentChild, (parentChild) => parentChild.parent)
+  children: ParentChild[];
 
-  @Column({ nullable: true })
-  phoneNumber: string;
-
-  @Column({ select: false })
-  password: string;
-
-  @CreateDateColumn()
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-
-  @UpdateDateColumn()
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
-
-  @Column({ default: true })
-  isActive: boolean;
+  @Column({ default: false })
+  isDeleted: boolean;
 }

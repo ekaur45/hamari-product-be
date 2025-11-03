@@ -1,7 +1,7 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import User from './user.entity';
 
-export type EducationType = 'school' | 'college' | 'university' | 'course' | 'certification' | 'other';
+
 
 @Entity('user_education')
 export default class UserEducation {
@@ -11,41 +11,34 @@ export default class UserEducation {
   @Column({ type: 'uuid' })
   userId: string;
 
-  @Column({ type: 'varchar', length: 32 })
-  type: EducationType;
+  @ManyToOne(() => User, (user) => user.educations)
+  @JoinColumn()
+  user: User;
+  
+  @Column({ type: 'varchar', length: 255 })
+  instituteName: string;
 
   @Column({ type: 'varchar', length: 255 })
-  institution: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  title?: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  field?: string;
-
-  @Column({ type: 'date', nullable: true })
-  startDate?: Date;
-
-  @Column({ type: 'date', nullable: true })
-  endDate?: Date;
-
+  degreeName: string;
+  @Column({ type: 'int' })
+  startedYear: number;
+  @Column({ type: 'int', nullable: true })
+  endedYear?: number;
   @Column({ type: 'boolean', default: false })
-  stillStudying: boolean;
-
-  @Column({ type: 'varchar', length: 512, nullable: true })
-  credentialUrl?: string;
-
+  isStillStudying: boolean;
   @Column({ type: 'text', nullable: true })
-  description?: string;
-
-  @CreateDateColumn()
+  remarks?: string;
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-
-  @UpdateDateColumn()
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
 
-  @ManyToOne(() => User)
-  user: User;
+  @Column({ default: false })
+  isDeleted: boolean;
 }
 
 
