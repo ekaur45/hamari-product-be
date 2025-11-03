@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards, Query, UploadedFile, UseInterceptors, SetMetadata } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
@@ -14,6 +14,7 @@ import UserService from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRole } from '../shared/enums';
+import { RoleGuard } from '../shared/guards/role.guard';
 
 @ApiTags('User')
 @Controller('users')
@@ -29,6 +30,7 @@ export default class UserController {
     description: 'User created successfully',
     type: ApiResponseModel,
   })
+  
   async createUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<ApiResponseModel<User>> {
@@ -93,6 +95,8 @@ export default class UserController {
     description: 'Users retrieved successfully',
     type: ApiResponseModel,
   })
+  // @UseGuards(RoleGuard)
+  // @SetMetadata("user_roles", [UserRole.ADMIN])
   async getAllUsers(
     @Query('role') role?: UserRole,
     @Query('isActive') isActive?: boolean,

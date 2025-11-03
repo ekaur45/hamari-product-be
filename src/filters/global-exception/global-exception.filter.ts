@@ -3,6 +3,7 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import AppError from 'src/modules/shared/models/app-error.model';
@@ -53,6 +54,7 @@ export class GlobalExceptionFilter<T> implements ExceptionFilter {
         details: errorDetails,
       },
       request.url,
+      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR,
     );
 
     response.status(200).json(errorResponse);

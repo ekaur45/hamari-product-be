@@ -77,19 +77,7 @@ export enum RelationshipType {
   OTHER = 'other',
 }
 
-export enum RelationshipStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  PENDING = 'pending',
-}
 
-// Academy Invitation Enums
-export enum InvitationStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  DECLINED = 'declined',
-  EXPIRED = 'expired',
-}
 
 // User Role Enum (if not already defined elsewhere)
 export enum UserRole {

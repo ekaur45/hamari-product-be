@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -13,6 +14,7 @@ import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 import RegisterDto from './dto/register.dto';
 import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
 import { ApiResponseModel } from '../shared/models/api-response.model';
+import { UserRole } from '../shared/enums';
 
 @Controller('auth')
 export class AuthController {
@@ -27,8 +29,9 @@ export class AuthController {
   @Post('login')
   async login(@Body() login: LoginDto): Promise<ApiResponseModel<User>> {
     const user = await this.authService.login(login);
-    return ApiResponseModel.success(user, 'Login successful');
+    return ApiResponseModel.success(user, 'Login successful', '/auth/login');
   }
+  
 
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
@@ -38,8 +41,11 @@ export class AuthController {
   })
   @Post('register')
   async register(@Body() user: RegisterDto): Promise<ApiResponseModel<User>> {
+    if(user.role === UserRole.ADMIN) {
+      throw new BadRequestException('Admin registration is not allowed.');
+    }
     const newUser = await this.authService.register(user);
-    return ApiResponseModel.success(newUser, 'Registration successful');
+    return ApiResponseModel.success(newUser, 'Registration successful', '/auth/register');
   }
 
   @ApiBearerAuth()

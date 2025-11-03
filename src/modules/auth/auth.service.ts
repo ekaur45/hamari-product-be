@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import LoginDto from './dto/login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import User from 'src/database/entities/user.entity';
 import { Repository } from 'typeorm';
-import AppError from '../shared/models/app-error.model';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import RegisterDto from './dto/register.dto';
@@ -24,7 +23,7 @@ export class AuthService {
       relations: ['details'],
     });
     if (!(user && bcrypt.compareSync(login.password, user.password)))
-      throw new AppError('Username or password is not correct.');
+      throw new BadRequestException('Username or password is not correct.');
 
     const { password: _, ...rest } = user;
     const access_token = this.jwtService.sign(rest,{
@@ -42,7 +41,7 @@ export class AuthService {
       where: [{ email: registerUser.email }],
       relations: ['details'],
     });
-    if (user) throw new AppError('User already exists.', 400);
+    if (user) throw new BadRequestException('User with this email already exists.');
 
     registerUser.password = bcrypt.hashSync(registerUser.password, 10);
 

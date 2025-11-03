@@ -47,6 +47,7 @@ export class ApiResponseModel<T = any> implements ApiResponse<T> {
     error?: { code?: string; details?: any },
     path: string = '',
     pagination?: ApiResponse<T>["pagination"],
+    statusCode: HttpStatus = HttpStatus.OK,
   ) {
     this.success = success;
     this.message = message;
@@ -55,14 +56,16 @@ export class ApiResponseModel<T = any> implements ApiResponse<T> {
     this.timestamp = new Date().toISOString();
     this.path = path;
     this.pagination = pagination;
+    this.statusCode = statusCode;
   }
 
   static success<T>(
     data: T,
     message: string = 'Success',
     path: string = '',
-  ): ApiResponseModel<T> {
-    return new ApiResponseModel(true, message, data, undefined, path);
+    statusCode: HttpStatus = HttpStatus.OK,
+    ): ApiResponseModel<T> {
+    return new ApiResponseModel(true, message, data, undefined, path, undefined, statusCode);
   }
 
   static successWithPagination<T>(
@@ -70,15 +73,17 @@ export class ApiResponseModel<T = any> implements ApiResponse<T> {
     pagination: ApiResponse<T>["pagination"],
     message: string = 'Success',
     path: string = '',
+    statusCode: HttpStatus = HttpStatus.OK,
   ): ApiResponseModel<T> {
-    return new ApiResponseModel(true, message, data, undefined, path, pagination);
+    return new ApiResponseModel(true, message, data, undefined, path, pagination, statusCode);
   }
 
   static error(
     message: string,
     error?: { code?: string; details?: any },
     path: string = '',
+    statusCode: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
   ): ApiResponseModel {
-    return new ApiResponseModel(false, message, undefined, error, path);
+    return new ApiResponseModel(false, message, undefined, error, path, undefined, statusCode);
   }
 }

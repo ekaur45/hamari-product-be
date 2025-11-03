@@ -3,16 +3,9 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   Unique,
   JoinColumn,
 } from 'typeorm';
-import User from './user.entity';
-import {
-  RelationshipType,
-  RelationshipStatus,
-} from '../../modules/shared/enums';
 import { Parent } from './parent.entity';
 import { Student } from './student.entity';
 
