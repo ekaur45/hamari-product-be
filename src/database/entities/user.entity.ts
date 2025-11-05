@@ -52,23 +52,23 @@ export default class User {
   @Column({ default: false })
   isDeleted: boolean;
 
-  @OneToOne(() => UserDetail, (userDetail) => userDetail.user)
-  @JoinColumn()
+  @OneToOne(() => UserDetail, (userDetail) => userDetail.user,{cascade: true})
+  @JoinColumn({ name: 'id' })
   details?: UserDetail;
 
-  @OneToMany(() => UserEducation, (userEducation) => userEducation.user)
+  @OneToMany(() => UserEducation, (userEducation) => userEducation.user,{cascade: true})
   educations?: UserEducation[] | null;
 
 
-  @OneToMany(() => Academy, (academy) => academy.owner)
+  @OneToMany(() => Academy, (academy) => academy.owner,{cascade: true})
   ownedAcademies?: Academy[] | null;
 
-  @OneToOne(() => Student, (student) => student.user)
+  @OneToOne(() => Student, (student) => student.user,{cascade: true})
   student?: Student | null;
 
-  @OneToOne(() => Teacher, (teacher) => teacher.user)
+  @OneToOne(() => Teacher, (teacher) => teacher.user,{cascade: true})
   teacher?: Teacher | null;
 
-  @OneToOne(() => Parent, (parent) => parent.user)
+  @OneToOne(() => Parent, (parent) => parent.user,{cascade: true})
   parent?: Parent | null;
 }

@@ -18,6 +18,7 @@ import { DiscoverModule } from './modules/discover/discover.module';
 import { UsersModule } from './modules/admin/users/users.module';
 import { TeachersModule } from './modules/admin/teachers/teachers.module';
 import { StudentsModule } from './modules/admin/students/students.module';
+import { ProfileModule } from './modules/profile/profile.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -34,6 +35,8 @@ import { StudentsModule } from './modules/admin/students/students.module';
       synchronize: false,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
+      logging: false,
+      logger: 'advanced-console',
     }),
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -58,6 +61,7 @@ import { StudentsModule } from './modules/admin/students/students.module';
     UsersModule,
     TeachersModule,
     StudentsModule,
+    ProfileModule,
   ],
   controllers: [],
   providers: [],

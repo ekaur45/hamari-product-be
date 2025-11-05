@@ -36,6 +36,6 @@ export default class UserDetail {
   // Relations moved to dedicated tables
 
   @OneToOne(() => User, (user) => user.details)
-  @JoinColumn()
+  @JoinColumn({ name: 'userId' })
   user: User;
 }
