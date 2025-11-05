@@ -22,12 +22,12 @@ export class Student {
   @JoinColumn()
   user: User;
 
-  @Column({ type: 'uuid' })
-  parentId: string;
+  @Column({ type: 'uuid', nullable: true })
+  parentId?: string;
 
   @ManyToOne(() => Parent, (parent) => parent.id)
   @JoinColumn()
-  parent: Parent;
+  parent?: Parent;
 
   // Array of course IDs
 

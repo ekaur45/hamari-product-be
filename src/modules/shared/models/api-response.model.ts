@@ -1,5 +1,14 @@
 import { HttpStatus } from "@nestjs/common";
 
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
@@ -8,14 +17,7 @@ export interface ApiResponse<T = any> {
     code?: string;
     details?: any;
   };
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
+  pagination?: Pagination;
   timestamp: string;
   path: string;
 }

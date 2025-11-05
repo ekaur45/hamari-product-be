@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import type UserType from 'src/modules/shared/models/roles.model';
 
 export default class RegisterDto {
@@ -26,4 +26,14 @@ export default class RegisterDto {
   @ApiProperty({ required: true, default: 'Other' })
   @IsNotEmpty({ message: 'Role is required.' })
   role: UserType;
+
+  @ApiProperty({ required: true })
+  @IsNotEmpty({ message: 'Agree to terms and conditions is required.' })
+  @IsBoolean({ message: 'Agree to terms and conditions is required.' })
+  agreeToTerms: boolean;
+
+  @ApiProperty({ required: true })
+  @IsNotEmpty({ message: 'Phone is required.' })
+  @IsString({ message: 'Phone must be a string.' })
+  phone: string;
 }

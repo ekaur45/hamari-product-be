@@ -32,7 +32,7 @@ export default class User {
   @Column({ unique: false })
   username: string;
 
-  @Column({ select: true })
+  @Column({ select: false })
   password: string;
 
   @Column({ default: true })

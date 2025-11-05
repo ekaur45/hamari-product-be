@@ -15,6 +15,9 @@ import { StudentModule } from './modules/student/student.module';
 import { TeacherModule } from './modules/teacher/teacher.module';
 import { SubjectModule } from './modules/subject/subject.module';
 import { DiscoverModule } from './modules/discover/discover.module';
+import { UsersModule } from './modules/admin/users/users.module';
+import { TeachersModule } from './modules/admin/teachers/teachers.module';
+import { StudentsModule } from './modules/admin/students/students.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -52,6 +55,9 @@ import { DiscoverModule } from './modules/discover/discover.module';
     TeacherModule,
     SubjectModule,
     DiscoverModule,
+    UsersModule,
+    TeachersModule,
+    StudentsModule,
   ],
   controllers: [],
   providers: [],
