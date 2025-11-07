@@ -1,11 +1,13 @@
-import { Body, Controller, ForbiddenException, Get, NotFoundException, Param, Put, Request, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, NotFoundException, Param, Post, Put, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ProfileService } from './profile.service';
-import { ApiBearerAuth, ApiBody, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { ApiResponseModel } from '../shared/models/api-response.model';
 import User from 'src/database/entities/user.entity';
 import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
 import UpdateProfileDto, { AddAvailabilityDto, UpdateProfessionalInfoDto, UpdateProfileBioDto, UpdateUserEducationDto, UpdateUserSubjectsDto } from './dto/update-profile.dto';
 import { Teacher } from 'src/database/entities/teacher.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
 @Controller('profile')
 export class ProfileController {
@@ -159,5 +161,47 @@ export class ProfileController {
         }
         const availability = await this.profileService.addAvailability(id, addAvailabilityDto, req.user);
         return ApiResponseModel.success(availability, 'Availability added successfully');
+    }
+
+    @Post('profile-photo')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: diskStorage({
+          destination: './uploads',
+          filename: (req, file, cb) => {
+            const randomName = Array(32)
+              .fill(null)
+              .map(() => Math.round(Math.random() * 16).toString(16))
+              .join('');
+            cb(null, `${randomName}-${file.originalname}`);
+          },
+        }),
+        limits: {
+            fileSize: 1024 * 1024 * 5, // 5MB
+        },
+      }))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: { type: 'string', format: 'binary' },
+            },
+        },
+    })
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    async updateProfilePicture(
+        @Request() req: { user: User },
+        @UploadedFile() file: Express.Multer.File
+    ): Promise<ApiResponseModel<Omit<User, 'password'>>> {
+        if (req.user.id !== req.user.id) {
+            throw new ForbiddenException('You can only update your own profile picture');
+        }
+        if (!file) {
+            throw new BadRequestException('No file uploaded');
+        }
+        const url = `/uploads/${file.filename}`;
+        const profilePicture = await this.profileService.updateProfilePicture(req.user.id, url, req.user);
+        return ApiResponseModel.success(profilePicture, 'Profile picture updated successfully');
     }
 }

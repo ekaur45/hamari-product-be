@@ -53,7 +53,6 @@ export default class User {
   isDeleted: boolean;
 
   @OneToOne(() => UserDetail, (userDetail) => userDetail.user,{cascade: true})
-  @JoinColumn({ name: 'id' })
   details?: UserDetail;
 
   @OneToMany(() => UserEducation, (userEducation) => userEducation.user,{cascade: true})

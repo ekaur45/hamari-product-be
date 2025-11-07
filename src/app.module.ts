@@ -19,6 +19,8 @@ import { UsersModule } from './modules/admin/users/users.module';
 import { TeachersModule } from './modules/admin/teachers/teachers.module';
 import { StudentsModule } from './modules/admin/students/students.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,7 +37,7 @@ import { ProfileModule } from './modules/profile/profile.module';
       synchronize: false,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
-      logging: false,
+      logging: true,
       logger: 'advanced-console',
     }),
     JwtModule.registerAsync({
@@ -44,6 +46,19 @@ import { ProfileModule } from './modules/profile/profile.module';
         secret: config.get<string>('JWT_SECRET', 'defaultSecret'),
         signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '3600s') },
       }),
+    }),
+    MulterModule.register({
+      dest: './uploads',
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const randomName = Array(32).fill(null).map(() => Math.round(Math.random() * 16).toString(16)).join('');
+          cb(null, `${randomName}-${file.originalname}`);
+        },
+      }),
+      limits: {
+        fileSize: 1024 * 1024 * 5, // 5MB
+      },
     }),
     UserModule,
     AuthModule,

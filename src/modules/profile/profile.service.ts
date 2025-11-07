@@ -38,7 +38,7 @@ export class ProfileService {
     async getProfile(user: User) {
         const query = this.userRepository
             .createQueryBuilder('user')
-            .leftJoinAndSelect('user.details', 'details')
+            .leftJoinAndSelect('user.details', 'details', 'user.id = details.userId')
             .leftJoinAndSelect('user.educations', 'educations');
 
         if (user.role === UserRole.STUDENT) {
@@ -257,5 +257,31 @@ export class ProfileService {
         });
         const saved = await this.teacherRepository.save(teacher);
         return teacher;
+    }
+
+    async updateProfilePicture(id: string, url: string, user: User) {
+        const userData = await this.userRepository.findOne({
+            where: { id: user.id },
+            relations: ['details'],
+        });
+        if (!userData) {
+            throw new NotFoundException('User not found');
+        }
+        if (!userData.details) {
+            userData.details = new UserDetail();
+            userData.details.userId = user.id;
+            userData.details.profileImage = url;
+            await this.userDetailRepository.upsert(userData.details, {
+                conflictPaths: ['userId'],
+            });
+        }
+        else {
+            userData.details.profileImage = url;
+            await this.userDetailRepository.upsert(userData.details, {
+                conflictPaths: ['userId'],
+            });
+        }
+        //await this.userRepository.save(userData);
+        return userData;
     }
 }

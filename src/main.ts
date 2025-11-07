@@ -7,9 +7,13 @@ import { GlobalExceptionFilter } from './filters/global-exception/global-excepti
 import { ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
 import multer from 'multer';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule);
+  // const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
 
   app.enableCors({
     origin: '*', // Allow all origins
@@ -30,8 +34,11 @@ async function bootstrap() {
   // ✅ Enable JSON & URL-encoded body parsing
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
   // Enable multipart/form-data parsing
-  app.use(multer({ dest: './uploads' }).any());
+  // app.use(multer({ dest: './uploads' }).any());
   app.setGlobalPrefix('/api');
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());

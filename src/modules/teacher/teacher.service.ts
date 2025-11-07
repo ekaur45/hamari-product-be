@@ -17,6 +17,7 @@ export class TeacherService {
   ): Promise<{ teachers: Teacher[], pagination: Pagination }> {
     const query = this.teacherRepository.createQueryBuilder('teacher')
       .leftJoinAndSelect('teacher.user', 'user')
+      .leftJoinAndSelect('user.details', 'details')
       .leftJoinAndSelect('teacher.availabilities', 'availabilities')
       .leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects')
       .leftJoinAndSelect('teacherSubjects.subject', 'subject')
