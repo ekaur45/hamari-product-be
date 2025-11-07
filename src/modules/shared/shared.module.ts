@@ -26,7 +26,7 @@ const ENTITIES = [
   Teacher,
   Student,
   Parent,
-  Availability,
+  Availability
 ];
 
 @Module({

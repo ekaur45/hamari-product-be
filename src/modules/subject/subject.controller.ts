@@ -1,9 +1,12 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Put, Query, Request, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
 import { SubjectService } from './subject.service';
 import { ApiResponseModel } from '../shared/models/api-response.model';
 import Subject from 'src/database/entities/subject.entity';
+import UpdateSubjectRatesDto from './dto/update-subject-rates.dto';
+import TeacherSubject from 'src/database/entities/teacher-subject.entity';
+import User from 'src/database/entities/user.entity';
 
 
 @ApiTags('Subject')
@@ -55,6 +58,18 @@ export class SubjectController {
   async getSubjectDetails(@Param('id') id: string): Promise<ApiResponseModel<Subject>> {
     const subject = await this.subjectService.getSubjectById(id);
     return ApiResponseModel.success(subject, 'Subject details retrieved successfully');
+  }
+
+  @Put('rates')
+  @ApiBody({ type: Array<UpdateSubjectRatesDto> })
+  @ApiResponse({
+    status: 200,
+    description: 'Subject rates updated successfully',
+    type: ApiResponseModel<TeacherSubject[]>,
+  })
+  async updateSubjectRates(@Body() updateSubjectRatesDto: Array<UpdateSubjectRatesDto>, @Request() req: { user: User }): Promise<ApiResponseModel<TeacherSubject[]>> {
+    const teacherSubjects = await this.subjectService.updateSubjectRates(updateSubjectRatesDto, req.user);
+    return ApiResponseModel.success(teacherSubjects, 'Subject rates updated successfully');
   }
 }
 

@@ -42,6 +42,12 @@ export default class TeacherSubject {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   fee: number | null;
 
+  @Column({ type:'decimal', precision: 10, scale: 2, nullable: true })
+  hourlyRate: number | null;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  monthlyRate: number | null;
+
   @Column({ type: 'enum', enum: SubjectSkillLevel, default: SubjectSkillLevel.Started })
   skillLevel: SubjectSkillLevel;
 

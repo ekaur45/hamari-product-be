@@ -64,4 +64,7 @@ export class Teacher {
 
   @OneToMany(() => TeacherBooking, (teacherBooking) => teacherBooking.teacher)
   teacherBookings: TeacherBooking[];
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  monthlyRate: number | null;
 }

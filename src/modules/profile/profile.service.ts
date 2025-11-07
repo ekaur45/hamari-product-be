@@ -229,7 +229,7 @@ export class ProfileService {
         if (user.role !== UserRole.TEACHER) {
             throw new ForbiddenException('You are not authorized to add availability');
         }
-        const teacher = await this.teacherRepository.findOne({
+        let teacher = await this.teacherRepository.findOne({
             where: { userId: user.id },
             relations: ['availabilities'],
         });
@@ -240,6 +240,13 @@ export class ProfileService {
             teacher.availabilities = [];
         }
         await this.teacherAvailabilityRepository.update({ teacherId: teacher.id }, { isDeleted: true });
+        teacher = await this.teacherRepository.findOne({
+            where: { userId: user.id, isDeleted: false },
+            relations: ['availabilities'],
+        });
+        if (!teacher) {
+            throw new NotFoundException('Teacher not found');
+        }
         // mark
         for (const item of addAvailabilityDto) {
             const availability = new Availability();

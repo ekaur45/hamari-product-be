@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Teacher } from 'src/database/entities/teacher.entity';
 import { Pagination } from '../shared/models/api-response.model';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import UpdateTeacherRatesDto from './dto/update-rates.dto';
+import User from 'src/database/entities/user.entity';
 @Injectable()
 export class TeacherService {
   constructor(
@@ -37,6 +39,33 @@ export class TeacherService {
       hasNext: page < Math.ceil(total / limit),
       hasPrev: page > 1,
     } };
+  }
+
+  async getTeacherById(id: string): Promise<Teacher> {
+    const teacher = await this.teacherRepository.findOne({
+      where: { id, isDeleted: false },
+      relations: ['user', 'user.details', 'availabilities', 'teacherSubjects', 'teacherSubjects.subject'],
+    });
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+    return teacher;
+  }
+
+  async updateTeacherRates(teacherId: string, updateTeacherRatesDto: UpdateTeacherRatesDto, user: User): Promise<Teacher> {
+    const teacher = await this.teacherRepository.findOne({
+      where: { id: teacherId, isDeleted: false },
+    });
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+    if (teacher.userId !== user.id) {
+        throw new ForbiddenException('You can only update your own rates');
+      }
+    teacher.hourlyRate = updateTeacherRatesDto.hourlyRate;
+    teacher.monthlyRate = updateTeacherRatesDto.monthlyRate;
+    await this.teacherRepository.save(teacher);
+    return teacher;
   }
 
 }

@@ -1,11 +1,18 @@
 import {
+  Body,
   Controller,
+  ForbiddenException,
   Get,
+  Param,
+  Patch,
+  Put,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiQuery,
   ApiResponse,
   ApiTags,
@@ -14,6 +21,8 @@ import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
 import { TeacherService } from './teacher.service';
 import { Teacher } from 'src/database/entities/teacher.entity';
 import { ApiResponseModel } from '../shared/models/api-response.model';
+import UpdateTeacherRatesDto from './dto/update-rates.dto';
+import User from 'src/database/entities/user.entity';
 
 
 
@@ -43,4 +52,33 @@ export class TeacherController {
     const { teachers, pagination } = await this.teacherService.getTeachersWithPagination(page, limit, search);
     return ApiResponseModel.successWithPagination(teachers, pagination, 'Teachers retrieved successfully');
   }
+
+
+  @Get(':id')
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher retrieved successfully',
+    type: ApiResponseModel<Teacher>,
+  })
+  async getTeacherById(@Param('id') id: string): Promise<ApiResponseModel<Teacher>> {
+    const teacher = await this.teacherService.getTeacherById(id);
+    return ApiResponseModel.success(teacher, 'Teacher retrieved successfully');
+  }
+
+  @Put(':teacherId/rates')
+  @ApiBody({ type: UpdateTeacherRatesDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher rates updated successfully',
+    type: ApiResponseModel<Teacher>,
+  })
+  async updateTeacherRates(
+    @Param('teacherId') teacherId: string, 
+    @Body() updateTeacherRatesDto: UpdateTeacherRatesDto,
+    @Request() req: { user: User }
+  ): Promise<ApiResponseModel<Teacher>> {
+    const teacher = await this.teacherService.updateTeacherRates(teacherId, updateTeacherRatesDto,req.user);
+    return ApiResponseModel.success(teacher, 'Teacher rates updated successfully');
+  }
+
 }

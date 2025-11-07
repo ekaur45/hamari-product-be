@@ -1,8 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import Subject from 'src/database/entities/subject.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Like, Repository } from 'typeorm';
+import { ILike, In, Like, Repository } from 'typeorm';
 import { Pagination } from '../shared/models/api-response.model';
+import TeacherSubject from 'src/database/entities/teacher-subject.entity';
+import UpdateSubjectRatesDto from './dto/update-subject-rates.dto';
+import User from 'src/database/entities/user.entity';
 
 
 @Injectable()
@@ -10,6 +13,8 @@ export class SubjectService {
   constructor(
     @InjectRepository(Subject)
     private readonly subjectRepository: Repository<Subject>,
+    @InjectRepository(TeacherSubject)
+    private readonly teacherSubjectRepository: Repository<TeacherSubject>,
   ) {}
 
   async getSubjects({name}: {name: string}): Promise<Subject[]> {
@@ -51,6 +56,29 @@ export class SubjectService {
       throw new NotFoundException('Subject not found');
     }
     return subject;
+  }
+
+
+  async updateSubjectRates(updateSubjectRatesDto: Array<UpdateSubjectRatesDto>, user: User): Promise<TeacherSubject[]> {
+    const teacherSubjects = await this.teacherSubjectRepository.find({
+      where: { id: In(updateSubjectRatesDto.map(dto => dto.id)), isDeleted: false },
+    });
+    if (!teacherSubjects) {
+      throw new NotFoundException('Teacher subjects not found');
+    }
+    if (teacherSubjects.length !== updateSubjectRatesDto.length) {
+      throw new NotFoundException('Some teacher subjects not found');
+    }
+    for (const dto of updateSubjectRatesDto) {
+      const teacherSubject = teacherSubjects.find(s => s.id === dto.id);
+      if (!teacherSubject) {
+        throw new NotFoundException(`Teacher subject with ID ${dto.id} not found`);
+      }
+      teacherSubject.hourlyRate = dto.hourlyRate;
+      teacherSubject.monthlyRate = dto.monthlyRate;
+      await this.teacherSubjectRepository.save(teacherSubject);
+    }
+    return teacherSubjects;
   }
 }
 
