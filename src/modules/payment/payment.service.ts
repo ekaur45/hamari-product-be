@@ -56,7 +56,7 @@ export class PaymentService {
       teacherSubjectId: createPaymentIntentDto.subjectId,
       availabilityId: createPaymentIntentDto.slotId,
     })}`);
-    await this.teacherBookingRepository.save({
+   const teacherBooking = await this.teacherBookingRepository.save({
       teacherId: createPaymentIntentDto.teacherId,
       studentId: student.id.toString(),
       status: BookingStatus.PENDING,
@@ -66,7 +66,16 @@ export class PaymentService {
       availabilityId: createPaymentIntentDto.slotId,
     });
     return {
-      url: 'https://example.com/payment-intent',
+      id: teacherBooking.id,
+      amount: teacherBooking.totalAmount || 0,
+      currency: 'USD',
+      status: teacherBooking.status,
+      bookingDate: teacherBooking.bookingDate,
+      teacherId: teacherBooking.teacherId,
+      studentId: teacherBooking.studentId,
+      teacherSubjectId: teacherBooking.teacherSubjectId,
+      availabilityId: teacherBooking.availabilityId,
+      url: 'http://localhost:4200/'+teacherBooking.id+'/test-payment',
     };
   }
 

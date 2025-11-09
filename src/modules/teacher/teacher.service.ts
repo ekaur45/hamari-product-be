@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import UpdateTeacherRatesDto from './dto/update-rates.dto';
 import User from 'src/database/entities/user.entity';
+import TeacherBooking from 'src/database/entities/teacher-booking.entity';
 @Injectable()
 export class TeacherService {
   constructor(
@@ -66,6 +67,16 @@ export class TeacherService {
     teacher.monthlyRate = updateTeacherRatesDto.monthlyRate;
     await this.teacherRepository.save(teacher);
     return teacher;
+  }
+  async getTeacherBookings(user: User): Promise<TeacherBooking[]> {
+    const teacher = await this.teacherRepository.findOne({
+      where: { userId: user.id, isDeleted: false },
+      relations: ['teacherBookings','teacherBookings.teacher', 'teacherBookings.student','teacherBookings.student.user', 'teacherBookings.teacherSubject', 'teacherBookings.availability', 'teacherBookings.teacherSubject.subject'],
+    });
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+    return teacher.teacherBookings;
   }
 
 }

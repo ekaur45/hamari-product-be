@@ -23,6 +23,7 @@ import { Teacher } from 'src/database/entities/teacher.entity';
 import { ApiResponseModel } from '../shared/models/api-response.model';
 import UpdateTeacherRatesDto from './dto/update-rates.dto';
 import User from 'src/database/entities/user.entity';
+import TeacherBooking from 'src/database/entities/teacher-booking.entity';
 
 
 
@@ -79,6 +80,17 @@ export class TeacherController {
   ): Promise<ApiResponseModel<Teacher>> {
     const teacher = await this.teacherService.updateTeacherRates(teacherId, updateTeacherRatesDto,req.user);
     return ApiResponseModel.success(teacher, 'Teacher rates updated successfully');
+  }
+
+  @Get(':teacherId/bookings')
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher bookings retrieved successfully',
+    type: ApiResponseModel<TeacherBooking[]>,
+  })
+  async getTeacherBookings(@Request() req: { user: User }): Promise<ApiResponseModel<TeacherBooking[]>> {
+    const bookings = await this.teacherService.getTeacherBookings(req.user);
+    return ApiResponseModel.success(bookings, 'Teacher bookings retrieved successfully');
   }
 
 }
