@@ -37,6 +37,9 @@ export default class TeacherBooking {
     @Column({ type: 'enum', enum: BookingStatus, default: BookingStatus.PENDING })
     status: BookingStatus;
 
+    @Column({ type: 'date' })
+    bookingDate: Date;
+
 
     @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
     totalAmount: number | null;

@@ -1,76 +1,74 @@
-import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsNumber,
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
-import { PaymentMethod } from '../../shared/enums';
-
-export class CreatePaymentDto {
+import { ApiProperty } from "@nestjs/swagger";
+import { IsDateString, IsNotEmpty, IsObject, IsString, IsUUID, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
+export class Slot {
   @ApiProperty({
-    description: 'Payment amount',
-    example: 50.0,
+    description: 'Day of week',
+    example: 'monday',
   })
-  @IsNotEmpty({ message: 'Payment amount is required' })
-  @IsNumber({}, { message: 'Payment amount must be a number' })
-  @Min(0, { message: 'Payment amount must be non-negative' })
-  amount: number;
-
+  @IsNotEmpty({ message: 'Day of week is required' })
+  @IsString({ message: 'Day of week must be a string' })
+  dayOfWeek: string;
+  @ApiProperty({
+    description: 'Start time',
+    example: '10:00',
+  })
+  @IsNotEmpty({ message: 'Start time is required' })
+  @IsString({ message: 'Start time must be a string' })
+  startTime: string;
+  @ApiProperty({
+    description: 'End time',
+    example: '11:00',
+  })
+  @IsNotEmpty({ message: 'End time is required' })
+  @IsString({ message: 'End time must be a string' })
+  endTime: string;
+}
+export class CreatePaymentIntentDto {
   @ApiProperty({
     description: 'Payment method',
-    enum: PaymentMethod,
-    example: PaymentMethod.ONLINE,
+    example: 'card',
   })
   @IsNotEmpty({ message: 'Payment method is required' })
-  @IsEnum(PaymentMethod, { message: 'Invalid payment method' })
-  method: PaymentMethod;
+  @IsString({ message: 'Payment method must be a string' })
+  paymentMethod: string;
+
 
   @ApiProperty({
-    description: 'Transaction ID',
-    example: 'TXN123456789',
-    required: false,
+    description: 'Selected date',
+    example: '2024-01-01',
   })
-  @IsOptional()
-  @IsString({ message: 'Transaction ID must be a string' })
-  transactionId?: string;
+  @IsNotEmpty({ message: 'Selected date is required' })
+  @IsDateString({}, { message: 'Selected date must be a valid date' })
+  selectedDate: Date;
+
 
   @ApiProperty({
-    description: 'Payment description',
-    example: 'Payment for Mathematics class',
-    required: false,
+    description: 'Slot',
+    example: {
+      dayOfWeek: 'monday',
+      startTime: '10:00',
+      endTime: '11:00',
+    },
   })
-  @IsOptional()
-  @IsString({ message: 'Description must be a string' })
-  description?: string;
+  @IsNotEmpty({ message: 'Slot ID is required' })
+  @IsUUID(4, { message: 'Slot ID must be a valid UUID' })  
+  slotId: string;
 
   @ApiProperty({
-    description: 'Payment notes',
-    example: 'Additional payment information',
-    required: false,
-  })
-  @IsOptional()
-  @IsString({ message: 'Notes must be a string' })
-  notes?: string;
-
-  @ApiProperty({
-    description: 'Class ID (if payment is for a specific class)',
+    description: 'Subject ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
-    required: false,
   })
-  @IsOptional()
-  @IsUUID(4, { message: 'Class ID must be a valid UUID' })
-  classId?: string;
+  @IsNotEmpty({ message: 'Subject ID is required' })
+  @IsUUID(4, { message: 'Subject ID must be a valid UUID' })
+  subjectId: string;
 
+  
   @ApiProperty({
-    description: 'Enrollment ID (if payment is for an enrollment)',
+    description: 'Teacher ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
-    required: false,
   })
-  @IsOptional()
-  @IsUUID(4, { message: 'Enrollment ID must be a valid UUID' })
-  enrollmentId?: string;
+  @IsNotEmpty({ message: 'Teacher ID is required' })
+  @IsUUID(4, { message: 'Teacher ID must be a valid UUID' })
+  teacherId: string;
 }

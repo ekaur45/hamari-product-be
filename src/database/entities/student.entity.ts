@@ -8,7 +8,7 @@ import StudentClassAttendance from './student-class-attendance.entity';
 @Entity('students')
 export class Student {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column({ type: 'uuid' })
   userId: string;

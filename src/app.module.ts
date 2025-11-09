@@ -37,7 +37,7 @@ import { diskStorage } from 'multer';
       synchronize: false,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
-      logging: true,
+      logging: process.env.DEBUG_DB === 'true' ? true : false,
       logger: 'advanced-console',
     }),
     JwtModule.registerAsync({
