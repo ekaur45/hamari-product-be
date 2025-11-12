@@ -15,10 +15,11 @@ import RegisterDto from './dto/register.dto';
 import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
 import { ApiResponseModel } from '../shared/models/api-response.model';
 import { UserRole } from '../shared/enums';
+import { ChatGateway } from '../websockets/chat-gateway/chat.gateway';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly chatGateway: ChatGateway) {}
 
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -61,5 +62,14 @@ export class AuthController {
   ): Promise<ApiResponseModel<Omit<User, 'password'>>> {
     const profile = await this.authService.getProfile(req.user.id);
     return ApiResponseModel.success(profile, 'Profile retrieved successfully');
+  }
+
+
+
+  @Get('test-ws')
+  async testWs(): Promise<ApiResponseModel<string>> {
+    const to = 'message_2a981d89-90fb-427a-a440-a729fb9b7b78';
+    this.chatGateway.server.emit(to, 'Hello, world!');
+    return ApiResponseModel.success('WebSocket test successful', 'WebSocket test successful');
   }
 }

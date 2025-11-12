@@ -9,10 +9,17 @@ import { ResponseInterceptor } from './interceptors/response.interceptor';
 import multer from 'multer';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { readFileSync } from 'fs';
+import { AddressInfo } from 'net';
 async function bootstrap() {
+  const httpsOptions = {
+    key: readFileSync('./src/ssl/server.key'),
+    cert: readFileSync('./src/ssl/server.crt'),
+  };
   const logger = new Logger('Bootstrap');
   // const app = await NestFactory.create(AppModule);
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { httpsOptions });
+  // const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
 
   app.enableCors({
@@ -52,8 +59,9 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
-  await app.listen(process.env.PORT ?? 3000);
-  logger.log(`Application is running on: ${await app.getUrl()}`);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
+  const { address, port } = (await app.getHttpServer().address()) as AddressInfo;
+  logger.log(`Application is running on: ${process.env.NODE_ENV === 'development' ? `http://${address}:${port}` : `https://${address}:${port}`}`);
 }
 bootstrap().catch((error) => {
   const logger = new Logger('Error');

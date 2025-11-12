@@ -31,8 +31,8 @@ export class AuthService {
   async login(login: LoginDto) {
     const user = await this.userRepository.findOne({
       where: [{ email: login.username }, { username: login.username }],
-      relations: ['details'],
-      select: ['id', 'email','password', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt','details'],
+      relations: ['details','student','teacher','parent'],
+      select: ['id', 'email','password', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt','details','student','teacher','parent'],
     });
     if (!(user && bcrypt.compareSync(login.password, user.password)))
       throw new BadRequestException('Username or password is not correct.');

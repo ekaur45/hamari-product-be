@@ -21,6 +21,7 @@ import { StudentsModule } from './modules/admin/students/students.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { WebsocketsModule } from './modules/websockets/websockets.modules';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -77,6 +78,7 @@ import { diskStorage } from 'multer';
     TeachersModule,
     StudentsModule,
     ProfileModule,
+    WebsocketsModule,
   ],
   controllers: [],
   providers: [],
