@@ -77,6 +77,17 @@ export class ClassRoomGateway implements OnGatewayConnection, OnGatewayDisconnec
             return;
         }
         console.log('student-joined-class_'+booking.id, { bookingId: booking.id, studentId: data.studentId });
-        this.server.emit('student-joined-class_'+booking.id, { bookingId: booking.id, studentId: data.studentId });
+        this.server.emit('student-joined-class_'+booking.id+'_'+data.studentId, { bookingId: booking.id, studentId: data.studentId });
+    }
+    @SubscribeMessage('teacher-joined-class')
+    async teacherJoinedClass(client: Socket, data: { bookingId: string, teacherId: string }): Promise<void> {
+        const booking = await this.teacherBookingRepository.findOne({ where: { id: data.bookingId, teacherId: data.teacherId } });
+        if (!booking) {
+            this.logger.error('Booking not found');
+            client.disconnect();
+            return;
+        }
+        console.log('teacher-joined-class_'+booking.id, { bookingId: booking.id, teacherId: data.teacherId });
+        this.server.emit('teacher-joined-class_'+booking.id+'_'+data.teacherId, { bookingId: booking.id, teacherId: data.teacherId });
     }
 }

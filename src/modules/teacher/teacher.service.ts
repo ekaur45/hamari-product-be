@@ -11,6 +11,8 @@ export class TeacherService {
   constructor(
     @InjectRepository(Teacher)
     private readonly teacherRepository: Repository<Teacher>,
+    @InjectRepository(TeacherBooking)
+    private readonly teacherBookingRepository: Repository<TeacherBooking>,
   ) {}
 
   async getTeachersWithPagination(
@@ -79,4 +81,11 @@ export class TeacherService {
     return teacher.teacherBookings;
   }
 
+  async getTeacherBookingById(bookingId: string): Promise<TeacherBooking> {
+    const booking = await this.teacherBookingRepository.findOne({ where: { id: bookingId, isDeleted: false }, relations: ['teacher', 'student', 'student.user', 'teacherSubject', 'availability', 'teacherSubject.subject'] });
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+    return booking;
+  }
 }

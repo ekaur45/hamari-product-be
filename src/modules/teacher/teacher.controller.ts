@@ -93,4 +93,17 @@ export class TeacherController {
     return ApiResponseModel.success(bookings, 'Teacher bookings retrieved successfully');
   }
 
+  @Get('booking/:bookingId')
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher booking retrieved successfully',
+    type: ApiResponseModel<TeacherBooking>,
+  })
+  async getTeacherBookingById(@Param('bookingId') bookingId: string): Promise<ApiResponseModel<TeacherBooking>> {
+    const booking = await this.teacherService.getTeacherBookingById(bookingId);
+    return ApiResponseModel.success(booking, 'Teacher booking retrieved successfully');
+  }
+
+
+
 }
