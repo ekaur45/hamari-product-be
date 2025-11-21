@@ -24,6 +24,8 @@ import { ApiResponseModel } from '../shared/models/api-response.model';
 import UpdateTeacherRatesDto from './dto/update-rates.dto';
 import User from 'src/database/entities/user.entity';
 import TeacherBooking from 'src/database/entities/teacher-booking.entity';
+import ClassEntity from 'src/database/entities/classes.entity';
+import Subject from 'src/database/entities/subject.entity';
 
 
 
@@ -104,6 +106,27 @@ export class TeacherController {
     return ApiResponseModel.success(booking, 'Teacher booking retrieved successfully');
   }
 
+  @Get(':teacherId/classes')
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher classes retrieved successfully',
+    type: ApiResponseModel<ClassEntity[]>,
+  })
+  async getTeacherClasses(@Request() req: { user: User }): Promise<ApiResponseModel<ClassEntity[]>> {
+    const classes = await this.teacherService.getTeacherClasses({...req.user});
+    return ApiResponseModel.success(classes, 'Teacher classes retrieved successfully');
+  }
+
+  @Get(':teacherId/subjects')
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher subjects retrieved successfully',
+    type: ApiResponseModel<Subject[]>,
+  })
+  async getTeacherSubjects(@Request() req: { user: User }): Promise<ApiResponseModel<Subject[]>> {
+    const subjects = await this.teacherService.getTeacherSubjects({...req.user});
+    return ApiResponseModel.success(subjects, 'Teacher subjects retrieved successfully');
+  }
 
 
 }

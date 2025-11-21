@@ -6,6 +6,8 @@ import { Repository } from 'typeorm';
 import UpdateTeacherRatesDto from './dto/update-rates.dto';
 import User from 'src/database/entities/user.entity';
 import TeacherBooking from 'src/database/entities/teacher-booking.entity';
+import ClassEntity from 'src/database/entities/classes.entity';
+import Subject from 'src/database/entities/subject.entity';
 @Injectable()
 export class TeacherService {
   constructor(
@@ -87,5 +89,25 @@ export class TeacherService {
       throw new NotFoundException('Booking not found');
     }
     return booking;
+  }
+  async getTeacherClasses(user: User): Promise<ClassEntity[]> {
+    const teacher = await this.teacherRepository.findOne({
+      where: { userId: user.id, isDeleted: false },
+      relations: ['classes', 'classes.subject', 'classes.classBookings', 'classes.classBookings.student', 'classes.classBookings.student.user'],
+    });
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+    return teacher.classes;
+  }
+  async getTeacherSubjects(user: User): Promise<Subject[]> {
+    const teacher = await this.teacherRepository.findOne({
+      where: { userId: user.id, isDeleted: false },
+      relations: ['teacherSubjects', 'teacherSubjects.subject'],
+    });
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+    return teacher.teacherSubjects.map(subject => subject.subject);
   }
 }

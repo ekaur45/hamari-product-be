@@ -12,14 +12,14 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { readFileSync } from 'fs';
 import { AddressInfo } from 'net';
 async function bootstrap() {
-  const httpsOptions = {
-    key: readFileSync('./src/ssl/server.key'),
-    cert: readFileSync('./src/ssl/server.crt'),
-  };
+  // const httpsOptions = {
+  //   key: readFileSync('./src/ssl/server.key'),
+  //   cert: readFileSync('./src/ssl/server.crt'),
+  // };
   const logger = new Logger('Bootstrap');
   // const app = await NestFactory.create(AppModule);
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { httpsOptions });
-  // const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  //const app = await NestFactory.create<NestExpressApplication>(AppModule, { httpsOptions });
+   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
 
   app.enableCors({
