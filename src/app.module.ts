@@ -26,20 +26,24 @@ import { WebsocketsModule } from './modules/websockets/websockets.modules';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `environments/.env.${process.env.NODE_ENV || 'local'}`,
+      envFilePath: [`environments/.env.${process.env.NODE_ENV || 'local'}`,`.env`]      
     }),
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: process.env.DB_HOST,
-      port: 3306,
-      username: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
-      synchronize: false,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      migrations: [__dirname + '/migrations/*{.ts,.js}'],
-      logging: process.env.DEBUG_DB === 'true' ? true : false,
-      logger: 'advanced-console',
+    TypeOrmModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get('DB_HOST'),
+        port: 3306,
+        username: configService.get('DB_USER'),
+        password: configService.get('DB_PASS'),
+        database: configService.get('DB_NAME'),
+        synchronize: false,
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
+        logging: configService.get('DEBUG_DB') === 'true' ? true : false,
+        logger: 'advanced-console',
+      }),
+      inject: [ConfigService],
+      imports: [ConfigModule],
     }),
     JwtModule.registerAsync({
       inject: [ConfigService],

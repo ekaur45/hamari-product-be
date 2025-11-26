@@ -11,6 +11,7 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { readFileSync } from 'fs';
 import { AddressInfo } from 'net';
+import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   // const httpsOptions = {
   //   key: readFileSync('./src/ssl/server.key'),
@@ -21,6 +22,7 @@ async function bootstrap() {
   //const app = await NestFactory.create<NestExpressApplication>(AppModule, { httpsOptions });
    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+   const configService = app.get(ConfigService);
 
   app.enableCors({
     origin: '*', // Allow all origins
@@ -44,8 +46,7 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
-  // Enable multipart/form-data parsing
-  // app.use(multer({ dest: './uploads' }).any());
+
   app.setGlobalPrefix('/api');
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
@@ -61,7 +62,7 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document);
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
   const { address, port } = (await app.getHttpServer().address()) as AddressInfo;
-  logger.log(`Application is running on: ${process.env.NODE_ENV === 'development' ? `http://${address}:${port}` : `https://${address}:${port}`}`);
+  logger.log(`Application is running on: ${(process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local') ? `http://${address}:${port}` : `https://${address}:${port}`}`);
 }
 bootstrap().catch((error) => {
   const logger = new Logger('Error');

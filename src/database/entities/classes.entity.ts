@@ -38,6 +38,9 @@ export default class ClassEntity {
 
     @Column({ type: 'integer', default: 0 })
     maxStudents: number;
+
+    @Column({ type:'json', nullable: true })
+    scheduleDays: string[] | null;
     
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -49,4 +52,8 @@ export default class ClassEntity {
 
     @OneToMany(() => ClassBooking, (classBooking) => classBooking.classEntity)
     classBookings: ClassBooking[];
+
+    getScheduleDays(): string[] {
+        return this.scheduleDays ?? [];
+    }
 }

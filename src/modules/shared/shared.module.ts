@@ -14,6 +14,7 @@ import { Parent } from 'src/database/entities/parent.entity';
 import Availability from 'src/database/entities/availablility.entity';
 import TeacherBooking from 'src/database/entities/teacher-booking.entity';
 import ClassBooking from 'src/database/entities/class-booking.entity';
+import ClassEntity from 'src/database/entities/classes.entity';
 
 const ENTITIES = [
   User,
@@ -30,7 +31,8 @@ const ENTITIES = [
   Parent,
   Availability,
   TeacherBooking,
-  ClassBooking
+  ClassBooking,
+  ClassEntity
 ];
 
 @Module({

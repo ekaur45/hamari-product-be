@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   Param,
   Patch,
+  Post,
   Put,
   Query,
   Request,
@@ -26,6 +28,7 @@ import User from 'src/database/entities/user.entity';
 import TeacherBooking from 'src/database/entities/teacher-booking.entity';
 import ClassEntity from 'src/database/entities/classes.entity';
 import Subject from 'src/database/entities/subject.entity';
+import { CreateClassDto } from './dto/create-class.dto';
 
 
 
@@ -128,5 +131,30 @@ export class TeacherController {
     return ApiResponseModel.success(subjects, 'Teacher subjects retrieved successfully');
   }
 
+
+  @Post(':teacherId/class')
+  @ApiBody({ type: CreateClassDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Class created successfully',
+    type: ApiResponseModel<ClassEntity>,
+  })
+  async createClass(@Param('teacherId') teacherId: string, @Body() createClassDto: CreateClassDto): Promise<ApiResponseModel<ClassEntity>> {
+    if (teacherId !== createClassDto.teacherId) {
+      throw new ForbiddenException('You can only create classes for your own teacher');
+    }
+    const classEntity = await this.teacherService.createClass(teacherId, createClassDto);
+    return ApiResponseModel.success(classEntity, 'Class created successfully');
+  }
+  @Delete(':teacherId/class/:classId')
+  @ApiResponse({
+    status: 200,
+    description: 'Class deleted successfully',
+    type: ApiResponseModel<ClassEntity>,
+  })
+  async deleteClass(@Param('teacherId') teacherId: string, @Param('classId') classId: string): Promise<ApiResponseModel<ClassEntity>> {
+    const classEntity = await this.teacherService.deleteClass(teacherId, classId);
+    return ApiResponseModel.success(classEntity, 'Class deleted successfully');
+  }
 
 }

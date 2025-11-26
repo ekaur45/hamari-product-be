@@ -8,6 +8,7 @@ import User from 'src/database/entities/user.entity';
 import TeacherBooking from 'src/database/entities/teacher-booking.entity';
 import ClassEntity from 'src/database/entities/classes.entity';
 import Subject from 'src/database/entities/subject.entity';
+import { CreateClassDto } from './dto/create-class.dto';
 @Injectable()
 export class TeacherService {
   constructor(
@@ -15,6 +16,10 @@ export class TeacherService {
     private readonly teacherRepository: Repository<Teacher>,
     @InjectRepository(TeacherBooking)
     private readonly teacherBookingRepository: Repository<TeacherBooking>,
+    @InjectRepository(Subject)
+    private readonly subjectRepository: Repository<Subject>,
+    @InjectRepository(ClassEntity)
+    private readonly classRepository: Repository<ClassEntity>,
   ) {}
 
   async getTeachersWithPagination(
@@ -92,8 +97,8 @@ export class TeacherService {
   }
   async getTeacherClasses(user: User): Promise<ClassEntity[]> {
     const teacher = await this.teacherRepository.findOne({
-      where: { userId: user.id, isDeleted: false },
-      relations: ['classes', 'classes.subject', 'classes.classBookings', 'classes.classBookings.student', 'classes.classBookings.student.user'],
+      where: { userId: user.id, isDeleted: false, classes: { isDeleted: false } },
+      relations: ['classes','classes.teacher','classes.teacher.user', 'classes.subject', 'classes.classBookings', 'classes.classBookings.student', 'classes.classBookings.student.user'],
     });
     if (!teacher) {
       throw new NotFoundException('Teacher not found');
@@ -109,5 +114,35 @@ export class TeacherService {
       throw new NotFoundException('Teacher not found');
     }
     return teacher.teacherSubjects.map(subject => subject.subject);
+  }
+  async createClass(teacherId: string, createClassDto: CreateClassDto): Promise<ClassEntity> {
+    const teacher = await this.teacherRepository.findOne({ where: { userId: teacherId, isDeleted: false }, relations: ['teacherSubjects', 'teacherSubjects.subject'] });
+    if (!teacher) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    // check if subject exists and exists in the teacher's subjects
+    const subject = await this.subjectRepository.findOne({ where: { id: createClassDto.subjectId, isDeleted: false } });
+    if (!subject) {
+      throw new NotFoundException('Subject not found');
+    }
+    if (!teacher.teacherSubjects.some(subject => subject.subjectId === createClassDto.subjectId)) {
+      throw new ForbiddenException('You can only create classes for your own subjects');
+    }
+    createClassDto.teacherId = teacher.id;
+    const classEntity = this.classRepository.create({
+      ...createClassDto,
+      scheduleDays: createClassDto.schedule ?? [],
+    });
+    await this.classRepository.save(classEntity);
+    return classEntity;
+  }
+  async deleteClass(teacherId: string, classId: string): Promise<ClassEntity> {
+    const classEntity = await this.classRepository.findOne({ where: { id: classId, teacherId, isDeleted: false } });
+    if (!classEntity) {
+      throw new NotFoundException('Class not found');
+    }
+    await this.classRepository.update(classId, { isDeleted: true });
+    return classEntity;
   }
 }
