@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
-import { Logger } from '@nestjs/common';
 import { GlobalExceptionFilter } from './filters/global-exception/global-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
@@ -12,17 +11,24 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { readFileSync } from 'fs';
 import { AddressInfo } from 'net';
 import { ConfigService } from '@nestjs/config';
+import { LoggerService } from './modules/logger/logger.service';
+
 async function bootstrap() {
   // const httpsOptions = {
   //   key: readFileSync('./src/ssl/server.key'),
   //   cert: readFileSync('./src/ssl/server.crt'),
   // };
-  const logger = new Logger('Bootstrap');
+
   // const app = await NestFactory.create(AppModule);
   //const app = await NestFactory.create<NestExpressApplication>(AppModule, { httpsOptions });
-   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-   const configService = app.get(ConfigService);
+  const configService = app.get(ConfigService);
+  const logger = await app.resolve(LoggerService);
+  logger.setContext('Bootstrap');
+
+  // Use custom logger
+  app.useLogger(logger);
 
   app.enableCors({
     origin: '*', // Allow all origins
@@ -48,8 +54,12 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('/api');
-  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Get logger instance for exception filter
+  const exceptionLogger = await app.resolve(LoggerService);
+  app.useGlobalFilters(new GlobalExceptionFilter(exceptionLogger));
   app.useGlobalInterceptors(new ResponseInterceptor());
+
   // Swagger Config
   const config = new DocumentBuilder()
     .setTitle('Lean API')
@@ -60,12 +70,19 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
+
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
   const { address, port } = (await app.getHttpServer().address()) as AddressInfo;
-  logger.log(`Application is running on: ${(process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local') ? `http://${address}:${port}` : `https://${address}:${port}`}`);
+
+  const serverUrl = (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local')
+    ? `http://${address}:${port}`
+    : `https://${address}:${port}`;
+
+  logger.log(`Application is running on: ${serverUrl}`);
+  logger.log(`Swagger documentation available at: ${serverUrl}/api-docs`);
 }
+
 bootstrap().catch((error) => {
-  const logger = new Logger('Error');
-  logger.error('Error starting application:', error);
+  console.error('Error starting application:', error);
   process.exit(1);
 });

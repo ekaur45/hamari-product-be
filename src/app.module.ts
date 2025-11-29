@@ -22,11 +22,12 @@ import { ProfileModule } from './modules/profile/profile.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { WebsocketsModule } from './modules/websockets/websockets.modules';
+import { LoggerModule } from './modules/logger/logger.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`environments/.env.${process.env.NODE_ENV || 'local'}`,`.env`]      
+      envFilePath: [`environments/.env.${process.env.NODE_ENV || 'local'}`, `.env`]
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
@@ -65,6 +66,7 @@ import { WebsocketsModule } from './modules/websockets/websockets.modules';
         fileSize: 1024 * 1024 * 5, // 5MB
       },
     }),
+    LoggerModule,
     UserModule,
     AuthModule,
     AcademyModule,
@@ -87,4 +89,4 @@ import { WebsocketsModule } from './modules/websockets/websockets.modules';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

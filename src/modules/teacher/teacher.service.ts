@@ -20,7 +20,7 @@ export class TeacherService {
     private readonly subjectRepository: Repository<Subject>,
     @InjectRepository(ClassEntity)
     private readonly classRepository: Repository<ClassEntity>,
-  ) {}
+  ) { }
 
   async getTeachersWithPagination(
     page: number,
@@ -41,14 +41,16 @@ export class TeacherService {
     query.skip((page - 1) * limit);
     query.take(limit);
     const [teachers, total] = await query.getManyAndCount();
-    return { teachers, pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasNext: page < Math.ceil(total / limit),
-      hasPrev: page > 1,
-    } };
+    return {
+      teachers, pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
+      }
+    };
   }
 
   async getTeacherById(id: string): Promise<Teacher> {
@@ -70,8 +72,8 @@ export class TeacherService {
       throw new NotFoundException('Teacher not found');
     }
     if (teacher.userId !== user.id) {
-        throw new ForbiddenException('You can only update your own rates');
-      }
+      throw new ForbiddenException('You can only update your own rates');
+    }
     teacher.hourlyRate = updateTeacherRatesDto.hourlyRate;
     teacher.monthlyRate = updateTeacherRatesDto.monthlyRate;
     await this.teacherRepository.save(teacher);
@@ -80,7 +82,7 @@ export class TeacherService {
   async getTeacherBookings(user: User): Promise<TeacherBooking[]> {
     const teacher = await this.teacherRepository.findOne({
       where: { userId: user.id, isDeleted: false },
-      relations: ['teacherBookings','teacherBookings.teacher', 'teacherBookings.student','teacherBookings.student.user', 'teacherBookings.teacherSubject', 'teacherBookings.availability', 'teacherBookings.teacherSubject.subject'],
+      relations: ['teacherBookings', 'teacherBookings.teacher', 'teacherBookings.student', 'teacherBookings.student.user', 'teacherBookings.teacherSubject', 'teacherBookings.availability', 'teacherBookings.teacherSubject.subject'],
     });
     if (!teacher) {
       throw new NotFoundException('Teacher not found');
@@ -98,7 +100,7 @@ export class TeacherService {
   async getTeacherClasses(user: User): Promise<ClassEntity[]> {
     const teacher = await this.teacherRepository.findOne({
       where: { userId: user.id, isDeleted: false, classes: { isDeleted: false } },
-      relations: ['classes','classes.teacher','classes.teacher.user', 'classes.subject', 'classes.classBookings', 'classes.classBookings.student', 'classes.classBookings.student.user'],
+      relations: ['classes', 'classes.teacher', 'classes.teacher.user', 'classes.subject', 'classes.classBookings', 'classes.classBookings.student', 'classes.classBookings.student.user'],
     });
     if (!teacher) {
       throw new NotFoundException('Teacher not found');
