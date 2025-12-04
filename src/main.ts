@@ -80,6 +80,7 @@ async function bootstrap() {
 
   logger.log(`Application is running on: ${serverUrl}`);
   logger.log(`Swagger documentation available at: ${serverUrl}/api-docs`);
+  
 }
 
 bootstrap().catch((error) => {

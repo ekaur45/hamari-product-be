@@ -50,7 +50,7 @@ export default class ClassEntity {
     @Column({ default: false })
     isDeleted: boolean;
 
-    @OneToMany(() => ClassBooking, (classBooking) => classBooking.classEntity)
+    @OneToMany(() => ClassBooking, (classBooking) => classBooking.class)
     classBookings: ClassBooking[];
 
     getScheduleDays(): string[] {

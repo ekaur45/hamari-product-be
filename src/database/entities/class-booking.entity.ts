@@ -19,7 +19,7 @@ export default class ClassBooking {
     classId: string;
     @ManyToOne(() => ClassEntity, (classEntity) => classEntity.classBookings)
     @JoinColumn()
-    classEntity: ClassEntity;
+    class: ClassEntity;
 
 
     @Column({type:'enum',enum:MonthOfYear})
