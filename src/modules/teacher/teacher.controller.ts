@@ -29,6 +29,11 @@ import TeacherBooking from 'src/database/entities/teacher-booking.entity';
 import ClassEntity from 'src/database/entities/classes.entity';
 import Subject from 'src/database/entities/subject.entity';
 import { CreateClassDto } from './dto/create-class.dto';
+import { Student } from 'src/database/entities/student.entity';
+import TeacherStudentsListDto from './dto/teacher-students-list.dto';
+import StudentPerformanceDto from './dto/student-performance.dto';
+import TeacherReviewsListDto from './dto/teacher-reviews-list.dto';
+import Review from 'src/database/entities/review.entity';
 
 
 
@@ -39,7 +44,7 @@ import { CreateClassDto } from './dto/create-class.dto';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class TeacherController {
-  constructor(private readonly teacherService: TeacherService) {}
+  constructor(private readonly teacherService: TeacherService) { }
 
   @Get('search')
   @ApiQuery({ name: 'page', type: 'number', required: false })
@@ -79,11 +84,11 @@ export class TeacherController {
     type: ApiResponseModel<Teacher>,
   })
   async updateTeacherRates(
-    @Param('teacherId') teacherId: string, 
+    @Param('teacherId') teacherId: string,
     @Body() updateTeacherRatesDto: UpdateTeacherRatesDto,
     @Request() req: { user: User }
   ): Promise<ApiResponseModel<Teacher>> {
-    const teacher = await this.teacherService.updateTeacherRates(teacherId, updateTeacherRatesDto,req.user);
+    const teacher = await this.teacherService.updateTeacherRates(teacherId, updateTeacherRatesDto, req.user);
     return ApiResponseModel.success(teacher, 'Teacher rates updated successfully');
   }
 
@@ -116,7 +121,7 @@ export class TeacherController {
     type: ApiResponseModel<ClassEntity[]>,
   })
   async getTeacherClasses(@Request() req: { user: User }): Promise<ApiResponseModel<ClassEntity[]>> {
-    const classes = await this.teacherService.getTeacherClasses({...req.user});
+    const classes = await this.teacherService.getTeacherClasses({ ...req.user });
     return ApiResponseModel.success(classes, 'Teacher classes retrieved successfully');
   }
 
@@ -127,7 +132,7 @@ export class TeacherController {
     type: ApiResponseModel<Subject[]>,
   })
   async getTeacherSubjects(@Request() req: { user: User }): Promise<ApiResponseModel<Subject[]>> {
-    const subjects = await this.teacherService.getTeacherSubjects({...req.user});
+    const subjects = await this.teacherService.getTeacherSubjects({ ...req.user });
     return ApiResponseModel.success(subjects, 'Teacher subjects retrieved successfully');
   }
 
@@ -155,6 +160,89 @@ export class TeacherController {
   async deleteClass(@Param('teacherId') teacherId: string, @Param('classId') classId: string): Promise<ApiResponseModel<ClassEntity>> {
     const classEntity = await this.teacherService.deleteClass(teacherId, classId);
     return ApiResponseModel.success(classEntity, 'Class deleted successfully');
+  }
+
+  @Get(':teacherId/classes/:classId/students')
+  @ApiResponse({
+    status: 200,
+    description: 'Students in class retrieved successfully',
+    type: ApiResponseModel<Student[]>,
+  })
+  async getStudentsInClass(
+    @Param('teacherId') teacherId: string,
+    @Param('classId') classId: string,
+    @Request() req: { user: User }
+  ): Promise<ApiResponseModel<Student[]>> {
+    const students = await this.teacherService.getStudentsInClass(teacherId, classId, req.user);
+    return ApiResponseModel.success(students, 'Students in class retrieved successfully');
+  }
+
+  @Get(':teacherId/students')
+  @ApiResponse({
+    status: 200,
+    description: 'All students retrieved successfully',
+    type: ApiResponseModel<TeacherStudentsListDto>,
+  })
+  async getAllStudents(
+    @Param('teacherId') teacherId: string,
+    @Request() req: { user: User }
+  ): Promise<ApiResponseModel<TeacherStudentsListDto>> {
+    const result = await this.teacherService.getAllStudents(req.user);
+    return ApiResponseModel.success(result, 'All students retrieved successfully');
+  }
+
+  @Get(':teacherId/students/:studentId/performance')
+  @ApiResponse({
+    status: 200,
+    description: 'Student performance retrieved successfully',
+    type: ApiResponseModel<StudentPerformanceDto>,
+  })
+  async getStudentPerformance(
+    @Param('teacherId') teacherId: string,
+    @Param('studentId') studentId: string,
+    @Request() req: { user: User }
+  ): Promise<ApiResponseModel<StudentPerformanceDto>> {
+    const result = await this.teacherService.getStudentPerformance(teacherId, studentId, req.user);
+    return ApiResponseModel.success(result, 'Student performance retrieved successfully');
+  }
+
+  @Get(':teacherId/students/performance')
+  @ApiResponse({
+    status: 200,
+    description: 'All students performance retrieved successfully',
+    type: ApiResponseModel<StudentPerformanceDto[]>,
+  })
+  async getAllStudentsPerformance(
+    @Param('teacherId') teacherId: string,
+    @Request() req: { user: User }
+  ): Promise<ApiResponseModel<StudentPerformanceDto[]>> {
+    const result = await this.teacherService.getAllStudentsPerformance(teacherId, req.user);
+    return ApiResponseModel.success(result, 'All students performance retrieved successfully');
+  }
+
+  @Get(':teacherId/reviews')
+  @ApiQuery({ name: 'page', type: 'number', required: false })
+  @ApiQuery({ name: 'limit', type: 'number', required: false })
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher reviews retrieved successfully',
+    type: ApiResponseModel<TeacherReviewsListDto>,
+  })
+  async getTeacherReviews(
+    @Param('teacherId') teacherId: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Request() req: { user: User }
+  ): Promise<ApiResponseModel<TeacherReviewsListDto>> {
+    const { reviews, pagination } = await this.teacherService.getTeacherReviews(teacherId, req.user, page, limit);
+    const stats = await this.teacherService.getTeacherReviewStats(teacherId, req.user);
+    
+    const result = new TeacherReviewsListDto();
+    result.reviews = reviews;
+    result.pagination = pagination;
+    result.stats = stats;
+    
+    return ApiResponseModel.success(result, 'Teacher reviews retrieved successfully');
   }
 
 }

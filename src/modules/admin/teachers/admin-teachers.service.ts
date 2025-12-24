@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Teacher } from 'src/database/entities/teacher.entity';
 import User from 'src/database/entities/user.entity';
 import TeacherListDto from './dto/teacher-list.dti';
+import TeacherUpdateStatusDto from './dto/teacher-update-status.dto';
+import TeacherUpdateVerificationDto from './dto/teacher-update-verification.dto';
+import TeacherUpdateDeletionDto from './dto/teacher-update-deletion.dto';
+import { Log } from 'src/database/entities/log.entity';
 
 @Injectable()
 export class AdminTeachersService {
@@ -12,6 +16,8 @@ export class AdminTeachersService {
         private readonly userRepository: Repository<User>,
         @InjectRepository(Teacher)
         private readonly teacherRepository: Repository<Teacher>,
+        @InjectRepository(Log)
+        private readonly logRepository: Repository<Log>,
     ) {}
 
     async getTeachers(filters: {
@@ -19,16 +25,29 @@ export class AdminTeachersService {
         limit: number;
         search?: string;
         isActive?: boolean;
+        isVerified?: boolean;
     }): Promise<TeacherListDto> {
-        const { page, limit, search, isActive } = filters;
+        const { page, limit, search, isActive, isVerified } = filters;
 
         
         const query = this.teacherRepository.createQueryBuilder('teacher');
         query.leftJoinAndSelect('teacher.user', 'user');
-        // query.where('teacher.isActive = :isActive', { isActive: isActive });
-        // if (search) {
-        //     query.andWhere('user.firstName LIKE :search OR user.lastName LIKE :search OR user.email LIKE :search', { search: `%${search}%` });
-        // }
+        query.where('teacher.isDeleted = :isDeleted', { isDeleted: false });
+
+        if (typeof isActive === 'boolean') {
+            query.andWhere('teacher.isActive = :isActive', { isActive });
+        }
+
+        if (typeof isVerified === 'boolean') {
+            query.andWhere('teacher.isVerified = :isVerified', { isVerified });
+        }
+
+        if (search) {
+            query.andWhere(
+                '(user.firstName LIKE :search OR user.lastName LIKE :search OR user.email LIKE :search)',
+                { search: `%${search}%` },
+            );
+        }
         query.orderBy('teacher.createdAt', 'DESC');
         query.skip((page - 1) * limit);
         query.take(limit);
@@ -49,5 +68,70 @@ export class AdminTeachersService {
             hasPrev: page > 1,
         };
         return result;
+    }
+
+    async updateTeacherStatus(id: string, payload: TeacherUpdateStatusDto): Promise<Teacher> {
+        const teacher = await this.teacherRepository.findOne({
+            where: { id, isDeleted: false },
+            relations: ['user'],
+        });
+        if (!teacher) {
+            throw new NotFoundException('Teacher not found');
+        }
+
+        teacher.isActive = payload.isActive;
+        if (teacher.user) {
+            teacher.user.isActive = payload.isActive;
+            await this.userRepository.save(teacher.user);
+        }
+        return this.teacherRepository.save(teacher);
+    }
+
+    async updateTeacherVerification(id: string, payload: TeacherUpdateVerificationDto, adminId?: string): Promise<Teacher> {
+        const teacher = await this.teacherRepository.findOne({
+            where: { id, isDeleted: false },
+            relations: ['user'],
+        });
+        if (!teacher) {
+            throw new NotFoundException('Teacher not found');
+        }
+        teacher.isVerified = payload.isVerified;
+        teacher.verificationNote = payload.note ?? null;
+        const saved = await this.teacherRepository.save(teacher);
+
+        // audit log (fire-and-forget)
+        this.logRepository.save({
+            level: 'info',
+            context: 'teacher-approval',
+            message: `Teacher ${payload.isVerified ? 'approved' : 'rejected'}`,
+            metadata: {
+                teacherId: teacher.id,
+                userId: teacher.user?.id,
+                adminId,
+                note: payload.note,
+                action: payload.isVerified ? 'approve' : 'reject',
+            },
+        }).catch(() => {});
+
+        return saved;
+    }
+
+    async updateTeacherDeletion(id: string, payload: TeacherUpdateDeletionDto): Promise<Teacher> {
+        const teacher = await this.teacherRepository.findOne({
+            where: { id },
+            relations: ['user'],
+        });
+        if (!teacher) {
+            throw new NotFoundException('Teacher not found');
+        }
+        teacher.isDeleted = payload.isDeleted;
+        if (payload.isDeleted) {
+            teacher.isActive = false;
+            if (teacher.user) {
+                teacher.user.isActive = false;
+                await this.userRepository.save(teacher.user);
+            }
+        }
+        return this.teacherRepository.save(teacher);
     }
 }

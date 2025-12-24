@@ -15,13 +15,20 @@ import Availability from 'src/database/entities/availablility.entity';
 import TeacherBooking from 'src/database/entities/teacher-booking.entity';
 import ClassBooking from 'src/database/entities/class-booking.entity';
 import ClassEntity from 'src/database/entities/classes.entity';
+import { Log } from 'src/database/entities/log.entity';
+import { AdminActionLoggerInterceptor } from './interceptors/admin-action-logger.interceptor';
+import Review from 'src/database/entities/review.entity';
+import SupportTicket from 'src/database/entities/support-ticket.entity';
+import Payout from 'src/database/entities/payout.entity';
+import Refund from 'src/database/entities/refund.entity';
+import Assignment from 'src/database/entities/assignment.entity';
+import AssignmentSubmission from 'src/database/entities/assignment-submission.entity';
 
 const ENTITIES = [
   User,
   UserDetail,
   UserEducation,
   Academy,
-  Performance,
   AcademyTeacher,
   ParentChild,
   Subject,
@@ -32,11 +39,19 @@ const ENTITIES = [
   Availability,
   TeacherBooking,
   ClassBooking,
-  ClassEntity
+  ClassEntity,
+  Log,
+  Review,
+  SupportTicket,
+  Payout,
+  Refund,
+  Assignment,
+  AssignmentSubmission
 ];
 
 @Module({
   imports: [TypeOrmModule.forFeature([...ENTITIES])],
-  exports: [TypeOrmModule.forFeature([...ENTITIES])],
+  providers: [AdminActionLoggerInterceptor],
+  exports: [TypeOrmModule.forFeature([...ENTITIES]), AdminActionLoggerInterceptor],
 })
 export default class SharedModule {}

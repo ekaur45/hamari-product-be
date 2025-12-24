@@ -1,9 +1,9 @@
 import { Column, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-
 import { Entity } from "typeorm";
 import { Teacher } from "./teacher.entity";
 import Subject from "./subject.entity";
 import ClassBooking from "./class-booking.entity";
+import { ClassStatus } from "src/modules/shared/enums";
 
 @Entity('classes')
 export default class ClassEntity {
@@ -41,6 +41,12 @@ export default class ClassEntity {
 
     @Column({ type:'json', nullable: true })
     scheduleDays: string[] | null;
+
+    @Column({ type: 'enum', enum: ClassStatus, default: ClassStatus.SCHEDULED })
+    status: ClassStatus;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    cancelReason: string | null;
     
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

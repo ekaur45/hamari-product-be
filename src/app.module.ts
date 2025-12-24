@@ -18,11 +18,18 @@ import { DiscoverModule } from './modules/discover/discover.module';
 import { UsersModule } from './modules/admin/users/users.module';
 import { TeachersModule } from './modules/admin/teachers/teachers.module';
 import { StudentsModule } from './modules/admin/students/students.module';
+import { AdminClassesModule } from './modules/admin/classes/classes.module';
+import { AdminLogsModule } from './modules/admin/logs/logs.module';
+import { AdminReviewsModule } from './modules/admin/reviews/reviews.module';
+import { AdminSupportModule } from './modules/admin/support/support.module';
+import { AdminFinancialModule } from './modules/admin/financial/financial.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { WebsocketsModule } from './modules/websockets/websockets.modules';
 import { LoggerModule } from './modules/logger/logger.module';
+import { AssignmentModule } from './modules/assignment/assignment.module';
+import { ParentModule } from './modules/parent/parent.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -83,8 +90,15 @@ import { LoggerModule } from './modules/logger/logger.module';
     UsersModule,
     TeachersModule,
     StudentsModule,
+    AdminClassesModule,
+    AdminLogsModule,
+    AdminReviewsModule,
+    AdminSupportModule,
+    AdminFinancialModule,
     ProfileModule,
     WebsocketsModule,
+    AssignmentModule,
+    ParentModule,
   ],
   controllers: [],
   providers: [],

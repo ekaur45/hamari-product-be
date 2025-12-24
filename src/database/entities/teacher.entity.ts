@@ -42,6 +42,9 @@ export class Teacher {
   @Column({ default: true })
   isVerified: boolean;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  verificationNote: string | null;
+
 
   @Column({ default: true })
   isActive: boolean;

@@ -86,17 +86,76 @@ export class EnrollmentService {
     return { classBookings, teacherBookings };
   }
 
-  async browseClasses() {
-    return await this.classRepository.find({
-      relations: ['teacher', 'teacher.user', 'academy'],
-      where: { isDeleted: false },
-    });
+  async browseClasses(page: number = 1, limit: number = 10, filters: { search?: string, subject?: string, maxPrice?: number } = {}) {
+    const query = this.classRepository.createQueryBuilder('class')
+      .leftJoinAndSelect('class.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'user')
+      .leftJoinAndSelect('class.subject', 'subject')
+      .leftJoinAndSelect('class.academy', 'academy')
+      .where('class.isDeleted = false');
+
+    if (filters.search) {
+      query.andWhere('(user.firstName LIKE :search OR user.lastName LIKE :search OR subject.name LIKE :search)', { search: `%${filters.search}%` });
+    }
+
+    if (filters.subject) {
+      query.andWhere('subject.name = :subjectName', { subjectName: filters.subject });
+    }
+
+    if (filters.maxPrice && filters.maxPrice < 50000) {
+      query.andWhere('class.price <= :maxPrice', { maxPrice: filters.maxPrice });
+    }
+
+    const [items, total] = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
-  async browseTeachers() {
-    return await this.teacherRepository.find({
-      relations: ['user', 'user.details', 'teacherSubjects', 'teacherSubjects.subject'],
-      where: { isDeleted: false, isActive: true }
-    });
+  async browseTeachers(page: number = 1, limit: number = 10, filters: { search?: string, subject?: string, maxPrice?: number } = {}) {
+    const query = this.teacherRepository.createQueryBuilder('teacher')
+      .leftJoinAndSelect('teacher.user', 'user')
+      .leftJoinAndSelect('user.details', 'details')
+      .leftJoinAndSelect('teacher.availabilities', 'availabilities')
+      .leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects')
+      .leftJoinAndSelect('teacherSubjects.subject', 'subject')
+      .where('teacher.isDeleted = false AND teacher.isActive = true');
+
+    if (filters.search) {
+      query.andWhere('(user.firstName LIKE :search OR user.lastName LIKE :search)', { search: `%${filters.search}%` });
+    }
+
+    if (filters.subject) {
+      query.andWhere('subject.name = :subjectName', { subjectName: filters.subject });
+    }
+
+    if (filters.maxPrice && filters.maxPrice < 50000) {
+      query.andWhere('(teacher.monthlyRate <= :maxPrice OR teacher.monthlyRate IS NULL)', { maxPrice: filters.maxPrice });
+    }
+
+    const [items, total] = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }

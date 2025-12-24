@@ -1,12 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UserRole } from 'src/modules/shared/enums';
-import UserService from 'src/modules/user/user.service';
 import AdminUsersListDto from './dto/admin-users-list.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import User from 'src/database/entities/user.entity';
 import AdminCreateUserDto from './dto/admin-create-user.dto';
 import * as bcrypt from 'bcrypt';
+import AdminUpdateUserStatusDto from './dto/admin-update-user-status.dto';
+import AdminUpdateUserRoleDto from './dto/admin-update-user-role.dto';
+import AdminUpdateUserDeletionDto from './dto/admin-update-user-deletion.dto';
 
 @Injectable()
 export class AdminUsersService {
@@ -24,22 +26,29 @@ export class AdminUsersService {
         isActive?: boolean;
     }): Promise<AdminUsersListDto> {
 
-        const query = this.userRepository.createQueryBuilder('users');
+        const query = this.userRepository.createQueryBuilder('user');
+        query.where('user.isDeleted = :isDeleted', { isDeleted: false });
 
-        // if (filters.search) {
-        //     query.andWhere('user.firstName LIKE :search OR user.lastName LIKE :search OR user.email LIKE :search', { search: `%${filters.search}%` });
-        // }
+        if (filters.search) {
+            query.andWhere(
+                '(user.firstName LIKE :search OR user.lastName LIKE :search OR user.email LIKE :search)',
+                { search: `%${filters.search}%` },
+            );
+        }
 
-        // if (filters.role) {
-        //     query.andWhere('user.role = :role', { role: filters.role });
-        // }
+        if (filters.role) {
+            query.andWhere('user.role = :role', { role: filters.role });
+        }
 
-        // if (filters.isActive) {
-        //     query.andWhere('user.isActive = :isActive', { isActive: filters.isActive });
-        // }
+        if (typeof filters.isActive === 'boolean') {
+            query.andWhere('user.isActive = :isActive', { isActive: filters.isActive });
+        }
 
-        query.orderBy('users.createdAt', 'DESC');
-        const [users, total] = await query.skip((filters.page - 1) * filters.limit).take(filters.limit).getManyAndCount();
+        query.orderBy('user.createdAt', 'DESC');
+        const [users, total] = await query
+            .skip((filters.page - 1) * filters.limit)
+            .take(filters.limit)
+            .getManyAndCount();
         const result = new AdminUsersListDto();
         result.users = users;
         result.totalUsers = total;
@@ -75,5 +84,35 @@ export class AdminUsersService {
             password: hashedPassword,
         });
         return await this.userRepository.save(user);
+    }
+
+    async updateUserStatus(id: string, payload: AdminUpdateUserStatusDto): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        user.isActive = payload.isActive;
+        return this.userRepository.save(user);
+    }
+
+    async updateUserRole(id: string, payload: AdminUpdateUserRoleDto): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        user.role = payload.role;
+        return this.userRepository.save(user);
+    }
+
+    async updateUserDeletion(id: string, payload: AdminUpdateUserDeletionDto): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        user.isDeleted = payload.isDeleted;
+        if (payload.isDeleted) {
+            user.isActive = false;
+        }
+        return this.userRepository.save(user);
     }
 }
