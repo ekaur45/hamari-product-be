@@ -11,10 +11,10 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class AdminUsersService {
     constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
 
-    ) {}
+    ) { }
 
     async getUsers(filters: {
         page: number;
@@ -23,7 +23,7 @@ export class AdminUsersService {
         role?: UserRole;
         isActive?: boolean;
     }): Promise<AdminUsersListDto> {
-        
+
         const query = this.userRepository.createQueryBuilder('users');
 
         // if (filters.search) {
@@ -33,20 +33,20 @@ export class AdminUsersService {
         // if (filters.role) {
         //     query.andWhere('user.role = :role', { role: filters.role });
         // }
-        
+
         // if (filters.isActive) {
         //     query.andWhere('user.isActive = :isActive', { isActive: filters.isActive });
         // }
 
         query.orderBy('users.createdAt', 'DESC');
-        const [users, total] = await query.skip((filters.page -1) * filters.limit).take(filters.limit).getManyAndCount();
+        const [users, total] = await query.skip((filters.page - 1) * filters.limit).take(filters.limit).getManyAndCount();
         const result = new AdminUsersListDto();
         result.users = users;
         result.totalUsers = total;
-        result.totalTeachers = users.filter(user => user.role === UserRole.TEACHER).length;
-        result.totalStudents = users.filter(user => user.role === UserRole.STUDENT).length;
-        result.totalParents = users.filter(user => user.role === UserRole.PARENT).length;
-        result.totalAcademyOwners = users.filter(user => user.role === UserRole.ACADEMY_OWNER).length;
+        result.totalTeachers = await this.userRepository.count({ where: { role: UserRole.TEACHER, isDeleted: false } });
+        result.totalStudents = await this.userRepository.count({ where: { role: UserRole.STUDENT, isDeleted: false } });
+        result.totalParents = await this.userRepository.count({ where: { role: UserRole.PARENT, isDeleted: false } });
+        result.totalAcademyOwners = await this.userRepository.count({ where: { role: UserRole.ACADEMY_OWNER, isDeleted: false } });
         result.pagination = {
             page: filters.page,
             limit: filters.limit,

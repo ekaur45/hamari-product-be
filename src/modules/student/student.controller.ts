@@ -24,7 +24,7 @@ import ClassBooking from 'src/database/entities/class-booking.entity';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class StudentController {
-  constructor(private readonly studentService: StudentService) {}
+  constructor(private readonly studentService: StudentService) { }
 
 
   @Get(':studentId/schedule')
@@ -36,12 +36,12 @@ export class StudentController {
   async getSchedule(
     @Param('studentId') studentId: string,
     @Request() req: { user: User }
-  ): Promise<ApiResponseModel<StudentScheduleDto[]>> {
-    
+  ): Promise<ApiResponseModel<StudentScheduleDto>> {
+
     const schedule = await this.studentService.getSchedule(req.user);
     return ApiResponseModel.success(schedule, 'Schedule retrieved successfully');
   }
-@Get(':studentId/classes/bookings')
+  @Get(':studentId/classes/bookings')
   @ApiResponse({
     status: 200,
     description: 'Classes retrieved successfully',

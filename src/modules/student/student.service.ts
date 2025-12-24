@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException
- } from '@nestjs/common';
+import {
+  Injectable, NotFoundException
+} from '@nestjs/common';
 import { StudentScheduleDto } from './dto/student-schedule.dto';
 import User from 'src/database/entities/user.entity';
 import { Student } from 'src/database/entities/student.entity';
@@ -21,9 +22,9 @@ export class StudentService {
 
     @InjectRepository(ClassBooking)
     private readonly classBookingRepository: Repository<ClassBooking>,
-  ) {}
+  ) { }
 
-  async getSchedule(user: User): Promise<StudentScheduleDto[]> {
+  async getSchedule(user: User): Promise<StudentScheduleDto> {
     const student = await this.studentRepository.findOne({
       where: {
         userId: user.id,
@@ -36,10 +37,19 @@ export class StudentService {
       where: {
         studentId: student.id,
       },
-      relations: ['teacher', 'teacherSubject', 'availability', 'teacherSubject.subject','teacher.user'],
+      relations: ['teacher', 'teacherSubject', 'availability', 'teacherSubject.subject', 'teacher.user'],
     });
-    
-    return teacherBookings;
+    const classBookings = await this.classBookingRepository.find({
+      where: {
+        studentId: student.id,
+      },
+      relations: ['class', 'class.teacher', 'class.teacher.user', 'class.subject', 'student', 'student.user', 'class.classBookings'],
+    });
+
+    return {
+      courseBooking: teacherBookings,
+      classBooking: classBookings
+    };
   }
   async getClasses(user: User): Promise<ClassBooking[]> {
     const student = await this.studentRepository.findOne({
@@ -54,7 +64,7 @@ export class StudentService {
       where: {
         studentId: student.id,
       },
-      relations: ['class', 'class.teacher', 'class.teacher.user', 'class.subject', 'student', 'student.user','class.classBookings'],
+      relations: ['class', 'class.teacher', 'class.teacher.user', 'class.subject', 'student', 'student.user', 'class.classBookings'],
     });
     return classBookings;
   }
