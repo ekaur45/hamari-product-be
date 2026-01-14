@@ -30,6 +30,8 @@ import { WebsocketsModule } from './modules/websockets/websockets.modules';
 import { LoggerModule } from './modules/logger/logger.module';
 import { AssignmentModule } from './modules/assignment/assignment.module';
 import { ParentModule } from './modules/parent/parent.module';
+import { NationalityModule } from './modules/nationality/nationality.module';
+import { FileModule } from './modules/file/file.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -99,6 +101,8 @@ import { ParentModule } from './modules/parent/parent.module';
     WebsocketsModule,
     AssignmentModule,
     ParentModule,
+    NationalityModule,
+    FileModule,
   ],
   controllers: [],
   providers: [],

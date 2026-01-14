@@ -95,6 +95,7 @@ export class ProfileService {
     async updateProfile(id: string, updateProfileDto: UpdateProfileDto, user: User) {
         const userData = await this.userRepository.findOne({
             where: { id: user.id },
+            relations: ['details'],
         });
         if (!userData) {
             throw new NotFoundException('User not found');
@@ -105,6 +106,20 @@ export class ProfileService {
         if (updateProfileDto.lastName) {
             userData.lastName = updateProfileDto.lastName;
         }
+        if (userData.details) {
+            userData.details.phone = updateProfileDto.phone;
+            userData.details.nationalityId = updateProfileDto.nationalityId;
+            userData.details.dateOfBirth = updateProfileDto.dateOfBirth;
+            userData.details.gender = updateProfileDto.gender;
+            userData.details.address = updateProfileDto.address;
+            userData.details.city = updateProfileDto.city;
+            userData.details.state = updateProfileDto.state;
+            userData.details.country = updateProfileDto.country;
+            userData.details.zipCode = updateProfileDto.zipCode;
+        }
+        // if (updateProfileDto.phone) {
+        //     userData.phone = updateProfileDto.phone;
+        // }
         await this.userRepository.save(userData);
         return userData;
     }
@@ -132,8 +147,23 @@ export class ProfileService {
         if (updateProfessionalInfoDto.yearsOfExperience) {
             userData.teacher.yearsOfExperience = updateProfessionalInfoDto.yearsOfExperience;
         }
-        if (updateProfessionalInfoDto.bio) {
-            userData.teacher.tagline = updateProfessionalInfoDto.bio;
+        if (updateProfessionalInfoDto.tagline) {
+            userData.teacher.tagline = updateProfessionalInfoDto.tagline;
+        }
+        if (updateProfessionalInfoDto.introduction) {
+            userData.teacher.introduction = updateProfessionalInfoDto.introduction;
+        }
+        if (updateProfessionalInfoDto.introductionVideoUrl) {
+            userData.teacher.introductionVideoUrl = updateProfessionalInfoDto.introductionVideoUrl;
+        }
+        if (updateProfessionalInfoDto.introductionVideoThumbnailUrl) {
+            userData.teacher.introductionVideoThumbnailUrl = updateProfessionalInfoDto.introductionVideoThumbnailUrl;
+        }
+        if (updateProfessionalInfoDto.introductionVideoTitle) {
+            userData.teacher.introductionVideoTitle = updateProfessionalInfoDto.introductionVideoTitle;
+        }
+        if (updateProfessionalInfoDto.introductionVideoDescription) {
+            userData.teacher.introductionVideoDescription = updateProfessionalInfoDto.introductionVideoDescription;
         }
         await this.userRepository.save(userData);
         return userData;

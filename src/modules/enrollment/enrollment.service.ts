@@ -91,7 +91,6 @@ export class EnrollmentService {
       .leftJoinAndSelect('class.teacher', 'teacher')
       .leftJoinAndSelect('teacher.user', 'user')
       .leftJoinAndSelect('class.subject', 'subject')
-      .leftJoinAndSelect('class.academy', 'academy')
       .where('class.isDeleted = false');
 
     if (filters.search) {

@@ -125,9 +125,9 @@ export class TeacherService {
     }
     return teacher.classes;
   }
-  async getTeacherSubjects(user: User): Promise<Subject[]> {
+  async getTeacherSubjects(teacherId: string, user: User): Promise<Subject[]> {
     const teacher = await this.teacherRepository.findOne({
-      where: { userId: user.id, isDeleted: false },
+      where: { id: teacherId, isDeleted: false },
       relations: ['teacherSubjects', 'teacherSubjects.subject'],
     });
     if (!teacher) {

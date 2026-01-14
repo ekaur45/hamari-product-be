@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsBoolean, IsEmpty, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { Type } from "class-transformer";
+import { IsArray, IsBoolean, IsDate, IsEmpty, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 import { AvailabilityDay } from "src/database/entities/availablility.entity";
 import { SubjectSkillLevel } from "src/database/entities/teacher-subject.entity";
 
@@ -19,6 +20,81 @@ export default class UpdateProfileDto {
     @IsString()
     @IsNotEmpty({ message: 'Last name is required' })
     lastName: string;
+
+    @ApiProperty({
+        description: 'User phone number',
+        example: '+923001234567',
+    })
+    @IsString()
+    @IsOptional()
+    phone: string;
+
+
+    @ApiProperty({
+        description: 'User nationality ID',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+    })
+    @IsString()
+    @IsOptional()
+    nationalityId: string;
+    
+    @ApiProperty({
+        description: 'User date of birth',
+        example: '2000-01-01',
+    })
+    @IsDate()
+    @Type(() => Date)
+    @IsOptional()
+    dateOfBirth: Date;
+
+    @ApiProperty({
+        description: 'User gender',
+        example: 'Male',
+    })
+    @IsString()
+    @IsOptional()
+    gender: string;
+
+    @ApiProperty({
+        description: 'User address',
+        example: '123 Main St, Anytown, USA',
+    })
+    @IsString()
+    @IsOptional()
+    address: string;
+
+    @ApiProperty({
+        description: 'User city',
+        example: 'Anytown',
+    })
+    @IsString()
+    @IsOptional()
+    city: string;
+
+    @ApiProperty({
+        description: 'User state',
+        example: 'Anytown',
+    })
+    @IsString()
+    @IsOptional()
+    state: string;
+
+    @ApiProperty({
+        description: 'User country',
+        example: 'USA',
+    })
+    @IsString()
+    @IsOptional()
+    country: string;
+
+    @ApiProperty({
+        description: 'User zip code',
+        example: '12345',
+    })
+    @IsString()
+    @IsOptional()
+    zipCode: string;
+
 }
 
 export class UpdateProfessionalInfoDto {
@@ -32,11 +108,12 @@ export class UpdateProfessionalInfoDto {
 
     @ApiProperty({
         description: 'Years of experience',
-        example: 5,
+        example: '5 years',
     })
-    @IsNumber()
+    @IsString()
+    @Type(() => String)
     @IsOptional()
-    yearsOfExperience: number;
+    yearsOfExperience: string;
 
     @ApiProperty({
         description: 'Tagline',
@@ -44,7 +121,48 @@ export class UpdateProfessionalInfoDto {
     })
     @IsString()
     @IsOptional()
-    bio: string;
+    tagline: string;
+
+    @ApiProperty({
+        description: 'Introduction',
+        example: 'I am a Math teacher with 5 years of experience',
+    })
+    @IsString()
+    @IsOptional()
+    introduction: string;
+
+    @ApiProperty({
+        description: 'Introduction video URL',
+        example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    })
+    @IsString()
+    @IsOptional()
+    introductionVideoUrl: string;
+
+    @ApiProperty({
+        description: 'Introduction video thumbnail URL',
+        example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    })
+    @IsString()
+    @IsOptional()
+    introductionVideoThumbnailUrl: string;
+
+    @ApiProperty({
+        description: 'Introduction video title',
+        example: 'Introduction to Math',
+    })
+    @IsString()
+    @IsOptional()
+    introductionVideoTitle: string;
+
+    @ApiProperty({
+        description: 'Introduction video description',
+        example: 'I am a Math teacher with 5 years of experience',
+    })
+    @IsString()
+    @IsOptional()
+    introductionVideoDescription: string;
+
 }
 
 export class UpdateProfileBioDto {

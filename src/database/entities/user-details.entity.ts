@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import User from './user.entity';
+import Nationality from './nationality.entity';
 
 @Entity('user_details')
 export default class UserDetail {
@@ -18,11 +19,32 @@ export default class UserDetail {
   @Column({ nullable: true })
   phone?: string;
 
-  @Column({ nullable: true })
-  address?: string;
+  @Column('uuid', { nullable: true })
+  nationalityId?: string;
+  @OneToOne(() => Nationality, (nationality) => nationality.id)
+  @JoinColumn({ name: 'nationalityId' })
+  nationality?: Nationality;
 
   @Column({ type: 'timestamp', nullable: true })
   dateOfBirth?: Date;
+
+  @Column({ length: 255, nullable: true })
+  gender?: string;
+
+  @Column({ nullable: true })
+  address?: string;
+
+  @Column({ length: 255, nullable: true })
+  city?: string;
+
+  @Column({ length: 255, nullable: true })
+  state?: string;
+
+  @Column({ length: 255, nullable: true })
+  country?: string;
+
+  @Column({ length: 255, nullable: true })
+  zipCode?: string;
 
   @Column({ nullable: true })
   profileImage?: string;

@@ -20,11 +20,26 @@ export class Teacher {
   @Column({ nullable: true })
   tagline: string;
 
-  @Column({ nullable: true })
-  yearsOfExperience: number;
+  @Column({ nullable: true, type: 'varchar', length: 255 })
+  yearsOfExperience: string;
 
   @Column({ nullable: true })
   preferredSubject: string;
+
+  @Column({ nullable: true })
+  introduction: string;
+
+  @Column({ nullable: true })
+  introductionVideoUrl: string;
+
+  @Column({ nullable: true })
+  introductionVideoThumbnailUrl: string;
+
+  @Column({ nullable: true })
+  introductionVideoTitle: string;
+
+  @Column({ nullable: true })
+  introductionVideoDescription: string;
 
   @Column({ nullable: true })
   specialization: string;

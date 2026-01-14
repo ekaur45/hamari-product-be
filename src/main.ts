@@ -12,6 +12,8 @@ import { readFileSync } from 'fs';
 import { AddressInfo } from 'net';
 import { ConfigService } from '@nestjs/config';
 import { LoggerService } from './modules/logger/logger.service';
+import { AppDataSource } from './database/data-source';
+import seedNationalities from './database/seeds/nationality.seed';
 
 async function bootstrap() {
   // const httpsOptions = {
@@ -59,7 +61,9 @@ async function bootstrap() {
   const exceptionLogger = await app.resolve(LoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(exceptionLogger));
   app.useGlobalInterceptors(new ResponseInterceptor());
-
+app.useGlobalPipes(new ValidationPipe({
+  transform: true,
+}));
   // Swagger Config
   const config = new DocumentBuilder()
     .setTitle('Lean API')
