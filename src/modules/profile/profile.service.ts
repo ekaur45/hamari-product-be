@@ -32,6 +32,9 @@ export class ProfileService {
 
         @InjectRepository(Availability)
         private readonly teacherAvailabilityRepository: Repository<Availability>,
+
+        @InjectRepository(UserEducation)
+        private readonly userEducationRepository: Repository<UserEducation>,
     ) {
     }
 
@@ -93,7 +96,7 @@ export class ProfileService {
     }
 
     async updateProfile(id: string, updateProfileDto: UpdateProfileDto, user: User) {
-        const userData = await this.userRepository.findOne({
+        let userData = await this.userRepository.findOne({
             where: { id: user.id },
             relations: ['details'],
         });
@@ -106,21 +109,39 @@ export class ProfileService {
         if (updateProfileDto.lastName) {
             userData.lastName = updateProfileDto.lastName;
         }
-        if (userData.details) {
-            userData.details.phone = updateProfileDto.phone;
-            userData.details.nationalityId = updateProfileDto.nationalityId;
-            userData.details.dateOfBirth = updateProfileDto.dateOfBirth;
-            userData.details.gender = updateProfileDto.gender;
-            userData.details.address = updateProfileDto.address;
-            userData.details.city = updateProfileDto.city;
-            userData.details.state = updateProfileDto.state;
-            userData.details.country = updateProfileDto.country;
-            userData.details.zipCode = updateProfileDto.zipCode;
+        if (!userData.details) {
+            userData.details = new UserDetail();
+            userData.details.userId = user.id;
         }
+        userData.details.phone = updateProfileDto.phone;
+        userData.details.nationalityId = updateProfileDto.nationalityId;
+        userData.details.dateOfBirth = updateProfileDto.dateOfBirth;
+        userData.details.gender = updateProfileDto.gender;
+        userData.details.address = updateProfileDto.address;
+        userData.details.city = updateProfileDto.city;
+        userData.details.state = updateProfileDto.state;
+        userData.details.country = updateProfileDto.country;
+        userData.details.zipCode = updateProfileDto.zipCode;
         // if (updateProfileDto.phone) {
         //     userData.phone = updateProfileDto.phone;
         // }
-        await this.userRepository.save(userData);
+        await this.userDetailRepository.upsert(userData.details, { conflictPaths: ['userId'] });
+        userData = await this.userRepository.findOne({
+            where: { id: user.id },
+        });
+        if (!userData) {
+            throw new NotFoundException('User not found');
+        }
+        userData.firstName = updateProfileDto.firstName;
+        userData.lastName = updateProfileDto.lastName;
+        await this.userRepository.update(userData.id, userData);
+        userData = await this.userRepository.findOne({
+            where: { id: user.id },
+            relations: ['details'],
+        });
+        if (!userData) {
+            throw new NotFoundException('User not found');
+        }
         return userData;
     }
 
@@ -189,9 +210,10 @@ export class ProfileService {
         return userData;
     }
     async updateUserEducation(id: string, updateUserEducationDto: UpdateUserEducationDto, user: User) {
-        if (user.role !== UserRole.TEACHER) {
-            throw new ForbiddenException('You are not authorized to update student education');
-        }
+        // if (user.role !== UserRole.TEACHER) {
+        //     throw new ForbiddenException('You are not authorized to update student education');
+        // }
+        const saved = await this.userEducationRepository.upsert({ ...updateUserEducationDto, userId: user.id }, { conflictPaths: ['id'] });
         const userData = await this.userRepository.findOne({
             where: { id: user.id },
             relations: ['educations'],
@@ -199,19 +221,29 @@ export class ProfileService {
         if (!userData) {
             throw new NotFoundException('User not found');
         }
-        const education = new UserEducation();
-        education.instituteName = updateUserEducationDto.instituteName;
-        education.degreeName = updateUserEducationDto.degreeName;
-        education.startedYear = updateUserEducationDto.startedYear;
-        education.endedYear = updateUserEducationDto.endedYear;
-        education.isStillStudying = updateUserEducationDto.isStillStudying;
-        education.remarks = updateUserEducationDto.remarks;
-        if (!userData.educations) {
-            userData.educations = [];
-        }
-        userData.educations.push(education);
-        const saved = await this.userRepository.save(userData);
         new Logger('ProfileService').log('User education updated successfully', saved);
+        return userData;
+    }
+    async deleteUserEducation(id: string, educationId: string, user: User) {
+        if (user.role !== UserRole.TEACHER) {
+            throw new ForbiddenException('You are not authorized to delete student education');
+        }
+        const userEducation = await this.userEducationRepository.findOne({ where: { id: educationId } });
+        if (!userEducation) {
+            throw new NotFoundException('User education not found');
+        }
+        if (userEducation.userId !== user.id) {
+            throw new ForbiddenException('You are not authorized to delete this education');
+        }
+        await this.userEducationRepository.remove(userEducation);
+        const userData = await this.userRepository.findOne({
+            where: { id: user.id },
+            relations: ['educations'],
+        });
+        if (!userData) {
+            throw new NotFoundException('User not found');
+        }
+        new Logger('ProfileService').log('User education deleted successfully', userEducation);
         return userData;
     }
     async updateUserSubjects(id: string, updateUserSubjectsDto: Array<UpdateUserSubjectsDto>, user: User) {
@@ -286,7 +318,7 @@ export class ProfileService {
             availability.teacherId = teacher.id;
             availability.isDeleted = false;
             teacher.availabilities.push(availability);
-            
+
         }
         //await this.teacherAvailabilityRepository.insert(teacher.availabilities.filter(a => a.isDeleted !== true));
         await this.teacherAvailabilityRepository.upsert(teacher.availabilities.filter(a => a.isDeleted === false), {

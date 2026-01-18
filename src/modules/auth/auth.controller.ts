@@ -5,8 +5,10 @@ import {
   Get,
   Post,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import express from 'express';
 import User from 'src/database/entities/user.entity';
 import { AuthService } from './auth.service';
 import LoginDto from './dto/login.dto';
@@ -19,7 +21,7 @@ import { ChatGateway } from '../websockets/chat-gateway/chat.gateway';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService, private readonly chatGateway: ChatGateway) {}
+  constructor(private readonly authService: AuthService, private readonly chatGateway: ChatGateway) { }
 
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -28,11 +30,21 @@ export class AuthController {
     type: ApiResponseModel,
   })
   @Post('login')
-  async login(@Body() login: LoginDto): Promise<ApiResponseModel<User>> {
+  async login(@Body() login: LoginDto,
+    @Res({ passthrough: true })
+    res: express.Response): Promise<ApiResponseModel<User>> {
     const user = await this.authService.login(login);
+
+    res.cookie('taleemiyat_token', user.access_token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
     return ApiResponseModel.success(user, 'Login successful', '/auth/login');
   }
-  
+
 
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
@@ -42,7 +54,7 @@ export class AuthController {
   })
   @Post('register')
   async register(@Body() user: RegisterDto): Promise<ApiResponseModel<User>> {
-    if(user.role === UserRole.ADMIN) {
+    if (user.role === UserRole.ADMIN) {
       throw new BadRequestException('Admin registration is not allowed.');
     }
     const newUser = await this.authService.register(user);
@@ -71,5 +83,16 @@ export class AuthController {
     const to = 'message_2a981d89-90fb-427a-a440-a729fb9b7b78';
     this.chatGateway.server.emit(to, 'Hello, world!');
     return ApiResponseModel.success('WebSocket test successful', 'WebSocket test successful');
+  }
+
+  @Get('logout')
+  async logout(@Res({ passthrough: true }) res: express.Response): Promise<ApiResponseModel<string>> {
+    res.clearCookie('taleemiyat_token', {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',   // must match cookie path
+    });
+    return ApiResponseModel.success('Logout successful', 'Logout successful');
   }
 }

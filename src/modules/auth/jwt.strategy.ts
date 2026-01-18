@@ -8,7 +8,12 @@ import { UserRole } from '../shared/enums';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private configService: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req) => {
+        if (req && req.cookies) {
+          return req.cookies['taleemiyat_token'];
+        }
+        return null;
+      },
       secretOrKey: configService.get<string>('JWT_SECRET'),
     });
   }

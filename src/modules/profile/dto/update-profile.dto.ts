@@ -37,7 +37,7 @@ export default class UpdateProfileDto {
     @IsString()
     @IsOptional()
     nationalityId: string;
-    
+
     @ApiProperty({
         description: 'User date of birth',
         example: '2000-01-01',
@@ -176,6 +176,16 @@ export class UpdateProfileBioDto {
 }
 
 export class UpdateUserEducationDto {
+
+    @ApiProperty({
+        description: 'Education ID',
+        example: '123e4567-e89b-12d3-a456-426614174000',
+    })
+    @IsString()
+    @Type(() => String)
+    @IsOptional()
+    id?: string;
+
     @ApiProperty({
         description: 'Institute name',
         example: 'University of Cambridge',
@@ -265,14 +275,14 @@ export class AddAvailabilityDto {
     @IsEnum(AvailabilityDay)
     @IsNotEmpty({ message: 'Day is required' })
     dayOfWeek: AvailabilityDay;
-    
+
     @ApiProperty({
         description: 'Start time',
         example: '10:00',
     })
     @IsString()
     @IsNotEmpty({ message: 'Start time is required' })
-    startTime: string; 
+    startTime: string;
 
     @ApiProperty({
         description: 'End time',
@@ -281,7 +291,7 @@ export class AddAvailabilityDto {
     @IsString()
     @IsNotEmpty({ message: 'End time is required' })
     endTime: string;
-    
+
     @ApiProperty({
         description: 'Notes',
         example: 'I am available on Sunday from 10:00 to 12:00',

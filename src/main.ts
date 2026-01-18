@@ -14,7 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { LoggerService } from './modules/logger/logger.service';
 import { AppDataSource } from './database/data-source';
 import seedNationalities from './database/seeds/nationality.seed';
-
+import cookieParser from 'cookie-parser';
 async function bootstrap() {
   // const httpsOptions = {
   //   key: readFileSync('./src/ssl/server.key'),
@@ -25,15 +25,25 @@ async function bootstrap() {
   //const app = await NestFactory.create<NestExpressApplication>(AppModule, { httpsOptions });
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  app.use(cookieParser());
   const configService = app.get(ConfigService);
   const logger = await app.resolve(LoggerService);
   logger.setContext('Bootstrap');
 
   // Use custom logger
   app.useLogger(logger);
-
+  const allowedOrigins = configService.get<string>('ALLOWED_ORIGINS')?.split(',') || ['http://localhost:4200', 'http://localhost:3000'];
   app.enableCors({
-    origin: '*', // Allow all origins
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true); // allow this origin
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders:
       'Origin, X-Requested-With, Content-Type, Accept, Authorization',
@@ -55,19 +65,21 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  app.setGlobalPrefix('/api');
+  app.setGlobalPrefix('/api', {
+    exclude: ['/public/*'],
+  });
 
   // Get logger instance for exception filter
   const exceptionLogger = await app.resolve(LoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(exceptionLogger));
   app.useGlobalInterceptors(new ResponseInterceptor());
-app.useGlobalPipes(new ValidationPipe({
-  transform: true,
-}));
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+  }));
   // Swagger Config
   const config = new DocumentBuilder()
-    .setTitle('Lean API')
-    .setDescription('API documentation for Lean project')
+    .setTitle('Taleemiyat API')
+    .setDescription('API documentation for Taleemiyat project')
     .setVersion('1.0')
     .addBearerAuth() // optional: adds JWT header auth
     .build();
@@ -84,7 +96,7 @@ app.useGlobalPipes(new ValidationPipe({
 
   logger.log(`Application is running on: ${serverUrl}`);
   logger.log(`Swagger documentation available at: ${serverUrl}/api-docs`);
-  
+
 }
 
 bootstrap().catch((error) => {

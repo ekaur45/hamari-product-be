@@ -32,6 +32,7 @@ import { AssignmentModule } from './modules/assignment/assignment.module';
 import { ParentModule } from './modules/parent/parent.module';
 import { NationalityModule } from './modules/nationality/nationality.module';
 import { FileModule } from './modules/file/file.module';
+import { PublicModule } from './modules/public/public.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -103,6 +104,7 @@ import { FileModule } from './modules/file/file.module';
     ParentModule,
     NationalityModule,
     FileModule,
+    PublicModule,
   ],
   controllers: [],
   providers: [],

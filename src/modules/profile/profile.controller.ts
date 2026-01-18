@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, ForbiddenException, Get, NotFoundException, Param, Post, Put, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, NotFoundException, Param, Post, Put, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { ApiResponseModel } from '../shared/models/api-response.model';
@@ -36,7 +36,6 @@ export class ProfileController {
         description: 'Profile updated successfully',
         type: ApiResponseModel,
     })
-
     @ApiParam({
         name: 'id',
         description: 'User ID',
@@ -47,8 +46,8 @@ export class ProfileController {
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
     async updateProfile(
-        @Param('id') id: string, 
-        @Body() updateProfileDto: UpdateProfileDto, 
+        @Param('id') id: string,
+        @Body() updateProfileDto: UpdateProfileDto,
         @Request() req: { user: User }
     ): Promise<ApiResponseModel<Omit<User, 'password'>>> {
         if (id !== req.user.id) {
@@ -129,6 +128,22 @@ export class ProfileController {
         return ApiResponseModel.success(userEducation, 'User education updated successfully');
     }
 
+    @Delete(':id/education/:educationId')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    async deleteUserEducation(
+        @Param('id') id: string,
+        @Param('educationId') educationId: string,
+        @Request() req: { user: User }
+    ): Promise<ApiResponseModel<Omit<User, 'password'>>> {
+        if (id !== req.user.id) {
+            throw new ForbiddenException('You can only delete your own education');
+        }
+        const userEducation = await this.profileService.deleteUserEducation(id, educationId, req.user);
+        return ApiResponseModel.success(userEducation, 'User education deleted successfully');
+    }
+
+
 
     @Put(':id/subjects')
     @ApiBody({ type: Array<UpdateUserSubjectsDto> })
@@ -166,19 +181,19 @@ export class ProfileController {
     @Post('profile-photo')
     @UseInterceptors(FileInterceptor('file', {
         storage: diskStorage({
-          destination: './uploads',
-          filename: (req, file, cb) => {
-            const randomName = Array(32)
-              .fill(null)
-              .map(() => Math.round(Math.random() * 16).toString(16))
-              .join('');
-            cb(null, `${randomName}-${file.originalname}`);
-          },
+            destination: './uploads',
+            filename: (req, file, cb) => {
+                const randomName = Array(32)
+                    .fill(null)
+                    .map(() => Math.round(Math.random() * 16).toString(16))
+                    .join('');
+                cb(null, `${randomName}-${file.originalname}`);
+            },
         }),
         limits: {
             fileSize: 1024 * 1024 * 5, // 5MB
         },
-      }))
+    }))
     @ApiConsumes('multipart/form-data')
     @ApiBody({
         schema: {

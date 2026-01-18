@@ -27,18 +27,18 @@ export class AuthService {
     private readonly jwtService: JwtService,
 
     private readonly config: ConfigService,
-  ) {}
+  ) { }
   async login(login: LoginDto) {
     const user = await this.userRepository.findOne({
       where: [{ email: login.username }, { username: login.username }],
-      relations: ['details','student','teacher','parent'],
-      select: ['id', 'email','password', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt','details','student','teacher','parent'],
+      relations: ['details', 'student', 'teacher', 'parent'],
+      select: ['id', 'email', 'password', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt', 'details', 'student', 'teacher', 'parent'],
     });
     if (!(user && bcrypt.compareSync(login.password, user.password)))
       throw new BadRequestException('Username or password is not correct.');
 
     const { password: _, ...rest } = user;
-    const access_token = this.jwtService.sign(rest,{
+    const access_token = this.jwtService.sign(rest, {
       secret: this.config.get('JWT_SECRET')
     });
 
@@ -59,20 +59,20 @@ export class AuthService {
 
     user = await this.userRepository.save(registerUser);
     const { password: _, ...rest } = user;
-    const access_token = this.jwtService.sign(rest,{
+    const access_token = this.jwtService.sign(rest, {
       secret: this.config.get('JWT_SECRET')
     });
-    if(registerUser.role === UserRole.TEACHER){
+    if (registerUser.role === UserRole.TEACHER) {
       const teacher = await this.teacherRepository.save({
         userId: user.id,
       });
     }
-    if(registerUser.role === UserRole.STUDENT){
+    if (registerUser.role === UserRole.STUDENT) {
       const student = await this.studentRepository.save({
         userId: user.id,
       });
     }
-    if(registerUser.role === UserRole.PARENT){
+    if (registerUser.role === UserRole.PARENT) {
       const parent = await this.parentRepository.save({
         userId: user.id,
       });
@@ -87,6 +87,7 @@ export class AuthService {
   async getProfile(userId: string) {
     const result = await this.userRepository.findOneOrFail({
       where: { id: userId },
+      relations: ['details', 'student', 'teacher', 'parent'],
     });
     const { password: _, ...rest } = result;
     return rest;
