@@ -1,12 +1,15 @@
-import { Body, Controller, Get, Param, Put, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Query, Request, SetMetadata, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
 import { SubjectService } from './subject.service';
-import { ApiResponseModel } from '../shared/models/api-response.model';
+import { ApiResponseModel, Pagination } from '../shared/models/api-response.model';
 import Subject from 'src/database/entities/subject.entity';
 import UpdateSubjectRatesDto from './dto/update-subject-rates.dto';
 import TeacherSubject from 'src/database/entities/teacher-subject.entity';
 import User from 'src/database/entities/user.entity';
+import { GetSubjectRequest } from './dto/get-subject.request';
+import { RoleGuard } from '../shared/guards/role.guard';
+import { UserRole } from '../shared/enums';
 
 
 @ApiTags('Subject')
@@ -14,7 +17,7 @@ import User from 'src/database/entities/user.entity';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class SubjectController {
-  constructor(private readonly subjectService: SubjectService) {}
+  constructor(private readonly subjectService: SubjectService) { }
 
 
   @Get()
@@ -29,6 +32,20 @@ export class SubjectController {
 
   ): Promise<ApiResponseModel<Subject[]>> {
     const subjects = await this.subjectService.getSubjects({ name });
+    return ApiResponseModel.success(subjects, 'Subjects retrieved successfully');
+  }
+  @Get('all')
+  @ApiResponse({
+    status: 200,
+    description: 'Subjects retrieved successfully',
+    type: ApiResponseModel<Subject[]>,
+  })
+  @UseGuards(RoleGuard)
+  @SetMetadata('user_roles', [[UserRole.ADMIN]])
+  async getAllSubjects(
+    @Query() query: GetSubjectRequest,
+  ): Promise<ApiResponseModel<{ data: Subject[], pagination: Pagination }>> {
+    const subjects = await this.subjectService.getAllSubjects(query);
     return ApiResponseModel.success(subjects, 'Subjects retrieved successfully');
   }
   @Get('search')
@@ -71,6 +88,8 @@ export class SubjectController {
     const teacherSubjects = await this.subjectService.updateSubjectRates(updateSubjectRatesDto, req.user);
     return ApiResponseModel.success(teacherSubjects, 'Subject rates updated successfully');
   }
+
+
 }
 
 

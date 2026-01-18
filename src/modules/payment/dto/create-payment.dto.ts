@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDateString, IsNotEmpty, IsObject, IsString, IsUUID, ValidateNested } from "class-validator";
+import { IsDateString, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 export class Slot {
   @ApiProperty({
@@ -52,7 +52,7 @@ export class CreatePaymentIntentDto {
     },
   })
   @IsNotEmpty({ message: 'Slot ID is required' })
-  @IsUUID(4, { message: 'Slot ID must be a valid UUID' })  
+  @IsUUID(4, { message: 'Slot ID must be a valid UUID' })
   slotId: string;
 
   @ApiProperty({
@@ -63,7 +63,7 @@ export class CreatePaymentIntentDto {
   @IsUUID(4, { message: 'Subject ID must be a valid UUID' })
   subjectId: string;
 
-  
+
   @ApiProperty({
     description: 'Teacher ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
@@ -71,4 +71,20 @@ export class CreatePaymentIntentDto {
   @IsNotEmpty({ message: 'Teacher ID is required' })
   @IsUUID(4, { message: 'Teacher ID must be a valid UUID' })
   teacherId: string;
+
+  @ApiProperty({
+    description: 'Total amount',
+    example: 100,
+  })
+  @IsNotEmpty({ message: 'Total amount is required' })
+  @IsNumber({}, { message: 'Total amount must be a number' })
+  totalAmount: number;
+
+  @ApiProperty({
+    description: 'Coupon code',
+    example: 'COUPON123',
+  })
+  @IsOptional()
+  @IsString({ message: 'Coupon code must be a string' })
+  couponCode?: string;
 }

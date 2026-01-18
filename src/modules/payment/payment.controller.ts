@@ -24,9 +24,9 @@ import User from 'src/database/entities/user.entity';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(private readonly paymentService: PaymentService) { }
 
-  @Post('create-payment-intent')
+  @Post('intent')
   @ApiBody({ type: CreatePaymentIntentDto })
   @ApiResponse({
     status: 200,

@@ -5,7 +5,7 @@ const USER_ROLES_KEY = 'user_roles';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) { }
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.get<UserRole[]>(USER_ROLES_KEY, context.getHandler());
@@ -14,7 +14,7 @@ export class RoleGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     if (!user) throw new ForbiddenException("Restricted access");
-    if (!requiredRoles.some((role) => user.role === role)) throw new ForbiddenException("Restricted access");
+    if (!requiredRoles.some((role) => user.role == role)) throw new ForbiddenException("Restricted access");
     return true;
   }
 }

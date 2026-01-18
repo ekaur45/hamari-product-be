@@ -23,6 +23,7 @@ import Payout from 'src/database/entities/payout.entity';
 import Refund from 'src/database/entities/refund.entity';
 import Assignment from 'src/database/entities/assignment.entity';
 import AssignmentSubmission from 'src/database/entities/assignment-submission.entity';
+import BookPaymentLog from 'src/database/entities/bookpayment-log.entity';
 
 const ENTITIES = [
   User,
@@ -46,7 +47,8 @@ const ENTITIES = [
   Payout,
   Refund,
   Assignment,
-  AssignmentSubmission
+  AssignmentSubmission,
+  BookPaymentLog
 ];
 
 @Module({
@@ -54,4 +56,4 @@ const ENTITIES = [
   providers: [AdminActionLoggerInterceptor],
   exports: [TypeOrmModule.forFeature([...ENTITIES]), AdminActionLoggerInterceptor],
 })
-export default class SharedModule {}
+export default class SharedModule { }

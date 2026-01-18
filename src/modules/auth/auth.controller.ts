@@ -40,7 +40,7 @@ export class AuthController {
       secure: false,
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 1000 * 60 * 60 * 24 * 1,
     });
     return ApiResponseModel.success(user, 'Login successful', '/auth/login');
   }

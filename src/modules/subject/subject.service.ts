@@ -6,6 +6,7 @@ import { Pagination } from '../shared/models/api-response.model';
 import TeacherSubject from 'src/database/entities/teacher-subject.entity';
 import UpdateSubjectRatesDto from './dto/update-subject-rates.dto';
 import User from 'src/database/entities/user.entity';
+import { GetSubjectRequest } from './dto/get-subject.request';
 
 
 @Injectable()
@@ -15,9 +16,9 @@ export class SubjectService {
     private readonly subjectRepository: Repository<Subject>,
     @InjectRepository(TeacherSubject)
     private readonly teacherSubjectRepository: Repository<TeacherSubject>,
-  ) {}
+  ) { }
 
-  async getSubjects({name}: {name: string}): Promise<Subject[]> {
+  async getSubjects({ name }: { name: string }): Promise<Subject[]> {
     return await this.subjectRepository.find({
       where: { name: Like(`%${name}%`) },
       order: { name: 'ASC' },
@@ -26,7 +27,7 @@ export class SubjectService {
   async getSubjectsWithPagination(
     page: number,
     limit: number,
-    name: string="",
+    name: string = "",
   ): Promise<{ subjects: Subject[], pagination: Pagination }> {
     const query = this.subjectRepository.createQueryBuilder('subject')
       .innerJoinAndSelect('subject.teacherSubjects', 'teacherSubjects')
@@ -38,19 +39,21 @@ export class SubjectService {
       query.andWhere('subject.name LIKE :name', { name: `%${name}%` });
     }
     const [subjects, total] = await query.skip((page - 1) * limit).take(limit).getManyAndCount();
-    return { subjects, pagination: {
-      page: page,
-      limit: limit,
-      total: total,
-      totalPages: Math.ceil(total / limit),
-      hasNext: page < Math.ceil(total / limit),
-      hasPrev: page > 1,
-    } };
+    return {
+      subjects, pagination: {
+        page: page,
+        limit: limit,
+        total: total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
+      }
+    };
   }
   async getSubjectById(id: string): Promise<Subject> {
     const subject = await this.subjectRepository.findOne({
       where: { id, isDeleted: false },
-      relations: ['teacherSubjects', 'teacherSubjects.teacher', 'teacherSubjects.teacher.user','teacherSubjects.teacher.user.details', 'teacherSubjects.teacher.availabilities'],
+      relations: ['teacherSubjects', 'teacherSubjects.teacher', 'teacherSubjects.teacher.user', 'teacherSubjects.teacher.user.details', 'teacherSubjects.teacher.availabilities'],
     });
     if (!subject) {
       throw new NotFoundException('Subject not found');
@@ -79,6 +82,29 @@ export class SubjectService {
       await this.teacherSubjectRepository.save(teacherSubject);
     }
     return teacherSubjects;
+  }
+
+
+  async getAllSubjects(request: GetSubjectRequest) {
+    const { page, limit, search } = request;
+    const query = this.subjectRepository.createQueryBuilder('subject')
+      .innerJoinAndSelect('subject.teacherSubjects', 'teacherSubjects')
+      .where('subject.isDeleted = false');
+    if (search) {
+      query.andWhere('subject.name LIKE :name', { name: `%${search}%` });
+    }
+    const [subjects, total] = await query.skip((page - 1) * limit).take(limit).getManyAndCount();
+    return {
+      data: subjects, pagination: {
+        page: page,
+        limit: limit,
+        total: total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
+      }
+    };
+
   }
 }
 
