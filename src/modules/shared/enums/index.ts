@@ -117,3 +117,9 @@ export enum AttendanceStatus {
   LEAVE = 'leave',
   EXCUSED = 'excused',
 }
+
+export enum CurrencyStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+}

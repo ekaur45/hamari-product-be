@@ -33,6 +33,7 @@ import { ParentModule } from './modules/parent/parent.module';
 import { NationalityModule } from './modules/nationality/nationality.module';
 import { FileModule } from './modules/file/file.module';
 import { PublicModule } from './modules/public/public.module';
+import { CurrencyModule } from './modules/currency/currency.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -105,6 +106,7 @@ import { PublicModule } from './modules/public/public.module';
     NationalityModule,
     FileModule,
     PublicModule,
+    CurrencyModule,
   ],
   controllers: [],
   providers: [],

@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Teacher } from "src/database/entities/teacher.entity";
 import { PaginationRequest } from "src/models/common/pagination.model";
+import { BookingStatus } from "src/modules/shared/enums";
 import { Repository } from "typeorm";
 import { Like } from "typeorm";
 
@@ -119,77 +120,200 @@ export class TeacherService {
     }
 
     async getTeacherDetail(teacherId: string) {
-        const teacher = await this.teacherRepository.findOne({
-            where: {
-                id: teacherId,
-            },
-            relations: ['user', 'user.details', 'user.details.nationality', 'user.educations', 'teacherSubjects', 'teacherSubjects.subject', 'availabilities', 'teacherBookings'],
-            select: {
-                id: true, // 🔥 MUST HAVE
-                tagline: true,
-                yearsOfExperience: true,
-                preferredSubject: true,
-                introduction: true,
-                introductionVideoUrl: true,
-                introductionVideoThumbnailUrl: true,
-                introductionVideoTitle: true,
-                introductionVideoDescription: true,
-                specialization: true,
-                hourlyRate: true,
-                monthlyRate: true,
-                classes: true,
+        // const teacher = await this.teacherRepository.findOne({
+        //     where: {
+        //         id: teacherId,
+        //         teacherBookings: {
+        //             status: BookingStatus.CONFIRMED,
+        //             isDeleted: false,
+        //         },
+        //     },
+        //     relations: ['user', 'user.details', 'user.details.nationality', 'user.educations', 'teacherSubjects', 'teacherSubjects.subject', 'availabilities', 'teacherBookings'],
+        //     select: {
+        //         id: true, // 🔥 MUST HAVE
+        //         tagline: true,
+        //         yearsOfExperience: true,
+        //         preferredSubject: true,
+        //         introduction: true,
+        //         introductionVideoUrl: true,
+        //         introductionVideoThumbnailUrl: true,
+        //         introductionVideoTitle: true,
+        //         introductionVideoDescription: true,
+        //         specialization: true,
+        //         hourlyRate: true,
+        //         monthlyRate: true,
+        //         classes: true,
 
-                user: {
-                    id: true, // 🔥 MUST HAVE
-                    firstName: true,
-                    lastName: true,
-                    email: true,
-                    username: true,
-                    details: {
-                        id: true, // 🔥 MUST HAVE
-                        bio: true,
-                        profileImage: true,
-                        phone: true,
-                        nationality: true,
-                        dateOfBirth: true,
-                        gender: true,
-                        address: true,
-                        city: true,
-                        state: true,
-                        country: true,
-                        zipCode: true,
-                        skills: true,
-                    },
-                    educations: {
-                        id: true, // 🔥 MUST HAVE
-                        instituteName: true,
-                        degreeName: true,
-                        startedYear: true,
-                        endedYear: true,
-                        isStillStudying: true,
-                        remarks: true,
-                    },
-                },
+        //         user: {
+        //             id: true, // 🔥 MUST HAVE
+        //             firstName: true,
+        //             lastName: true,
+        //             email: true,
+        //             username: true,
+        //             details: {
+        //                 id: true, // 🔥 MUST HAVE
+        //                 bio: true,
+        //                 profileImage: true,
+        //                 phone: true,
+        //                 nationality: true,
+        //                 dateOfBirth: true,
+        //                 gender: true,
+        //                 address: true,
+        //                 city: true,
+        //                 state: true,
+        //                 country: true,
+        //                 zipCode: true,
+        //                 skills: true,
+        //             },
+        //             educations: {
+        //                 id: true, // 🔥 MUST HAVE
+        //                 instituteName: true,
+        //                 degreeName: true,
+        //                 startedYear: true,
+        //                 endedYear: true,
+        //                 isStillStudying: true,
+        //                 remarks: true,
+        //             },
+        //         },
 
-                teacherSubjects: {
-                    id: true, // 🔥 MUST HAVE
-                    subject: true,
-                    hourlyRate: true,
-                    monthlyRate: true,
-                },
+        //         teacherSubjects: {
+        //             id: true, // 🔥 MUST HAVE
+        //             subject: true,
+        //             hourlyRate: true,
+        //             monthlyRate: true,
+        //         },
 
-                availabilities: {
-                    id: true, // 🔥 MUST HAVE
-                    dayOfWeek: true,
-                    startTime: true,
-                    endTime: true,
-                },
+        //         availabilities: {
+        //             id: true, // 🔥 MUST HAVE
+        //             dayOfWeek: true,
+        //             startTime: true,
+        //             endTime: true,
+        //         },
 
-                teacherBookings: {
-                    id: true // 🔥 MUST HAVE
-                }
-            },
-        })
+        //         teacherBookings: {
+        //             id: true, // 🔥 MUST HAVE
+        //             bookingDate: true,
+        //             totalAmount: true,
+        //             paidAmount: true,
+        //             dueAmount: true,
+        //             discountAmount: true,
+        //             status: true,
+        //             createdAt: true,
+        //             updatedAt: true,
+        //             isDeleted: true,
+        //         }
+        //     },
+        // })
+        const teacher = await this.teacherRepository
+        .createQueryBuilder('teacher')
+      
+        // ================= USER =================
+        .leftJoinAndSelect('teacher.user', 'user')
+        .leftJoinAndSelect('user.details', 'details')
+        .leftJoinAndSelect('details.nationality', 'nationality')
+        .leftJoinAndSelect('user.educations', 'educations')
+      
+        // ================= TEACHER SUBJECTS =================
+        .leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects')
+        .leftJoinAndSelect('teacherSubjects.subject', 'subject')
+      
+        // ================= AVAILABILITIES =================
+        .leftJoinAndSelect('teacher.availabilities', 'availabilities')
+      
+        // ================= BOOKINGS (FILTERED) =================
+        .leftJoinAndSelect(
+          'teacher.teacherBookings',
+          'teacherBookings',
+          'teacherBookings.status = :status AND teacherBookings.isDeleted = false',
+          { status: BookingStatus.COMPLETED },
+        )
+        .leftJoinAndSelect('teacherBookings.availability', 'availability')
+      
+        // ================= WHERE =================
+        .where('teacher.id = :teacherId', { teacherId })
+      
+        // ================= SELECT =================
+        .select([
+          // ---- Teacher
+          'teacher.id',
+          'teacher.tagline',
+          'teacher.yearsOfExperience',
+          'teacher.preferredSubject',
+          'teacher.introduction',
+          'teacher.introductionVideoUrl',
+          'teacher.introductionVideoThumbnailUrl',
+          'teacher.introductionVideoTitle',
+          'teacher.introductionVideoDescription',
+          'teacher.specialization',
+          'teacher.hourlyRate',
+          'teacher.monthlyRate',
+      
+          // ---- User
+          'user.id',
+          'user.firstName',
+          'user.lastName',
+          'user.email',
+          'user.username',
+      
+          // ---- User Details
+          'details.id',
+          'details.bio',
+          'details.profileImage',
+          'details.phone',
+          'details.dateOfBirth',
+          'details.gender',
+          'details.address',
+          'details.city',
+          'details.state',
+          'details.country',
+          'details.zipCode',
+          'details.skills',
+      
+          // ---- Nationality
+          'nationality.id',
+          'nationality.name',
+      
+          // ---- Educations
+          'educations.id',
+          'educations.instituteName',
+          'educations.degreeName',
+          'educations.startedYear',
+          'educations.endedYear',
+          'educations.isStillStudying',
+          'educations.remarks',
+      
+          // ---- Teacher Subjects
+          'teacherSubjects.id',
+          'teacherSubjects.hourlyRate',
+          'teacherSubjects.monthlyRate',
+      
+          // ---- Subject
+          'subject.id',
+          'subject.name',
+      
+          // ---- Availabilities
+          'availabilities.id',
+          'availabilities.dayOfWeek',
+          'availabilities.startTime',
+          'availabilities.endTime',
+      
+          // ---- Bookings (CONFIRMED ONLY)
+          'teacherBookings.id',
+          'teacherBookings.bookingDate',
+          'teacherBookings.totalAmount',
+          'teacherBookings.paidAmount',
+          'teacherBookings.dueAmount',
+          'teacherBookings.discountAmount',
+          'teacherBookings.status',
+          'teacherBookings.createdAt',
+          'teacherBookings.updatedAt',
+          'teacherBookings.isDeleted',
+          'teacherBookings.availability',
+          'availability.startTime',
+          'availability.endTime',
+        ])
+      
+        .getOne();
         return teacher;
     }
 }

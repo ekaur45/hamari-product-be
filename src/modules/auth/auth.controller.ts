@@ -42,7 +42,7 @@ export class AuthController {
       path: '/',
       maxAge: 1000 * 60 * 60 * 24 * 1,
     }
-    if (process.env.NODE_ENV === 'local') {
+    if (process.env.NODE_ENV === 'production') {
       cookiesOptions.secure = true;
       cookiesOptions.domain = '.taleemiyat.com';
     }
