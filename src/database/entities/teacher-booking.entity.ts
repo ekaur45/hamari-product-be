@@ -27,7 +27,7 @@ export default class TeacherBooking {
     @JoinColumn()
     teacherSubject: TeacherSubject;
 
-    @Column({type:'uuid'})
+    @Column({ type: 'uuid' })
     availabilityId: string;
     @ManyToOne(() => Availability, (availability) => availability.teacherBookings)
     @JoinColumn()
@@ -37,7 +37,7 @@ export default class TeacherBooking {
     @Column({ type: 'enum', enum: BookingStatus, default: BookingStatus.PENDING })
     status: BookingStatus;
 
-    @Column({ type: 'date' })
+    @Column({ type: 'datetime' })
     bookingDate: Date;
 
 

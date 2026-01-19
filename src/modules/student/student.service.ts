@@ -62,12 +62,16 @@ export class StudentService {
     const teacherBookings = await this.teacherBookingRepository.find({
       where: {
         studentId: student.id,
+        isDeleted: false,
+        status: BookingStatus.COMPLETED,
       },
       relations: ['teacher', 'teacherSubject', 'availability', 'teacherSubject.subject', 'teacher.user'],
     });
     const classBookings = await this.classBookingRepository.find({
       where: {
         studentId: student.id,
+        isDeleted: false,
+        status: BookingStatus.COMPLETED,
       },
       relations: ['class', 'class.teacher', 'class.teacher.user', 'class.subject', 'student', 'student.user', 'class.classBookings'],
     });
@@ -133,17 +137,17 @@ export class StudentService {
     if (classIds.length > 0 || teacherBookingIds.length > 0) {
       const conditions: string[] = [];
       const params: any = {};
-      
+
       if (classIds.length > 0) {
         conditions.push('assignment.classId IN (:...classIds)');
         params.classIds = classIds;
       }
-      
+
       if (teacherBookingIds.length > 0) {
         conditions.push('assignment.teacherBookingId IN (:...teacherBookingIds)');
         params.teacherBookingIds = teacherBookingIds;
       }
-      
+
       if (conditions.length > 0) {
         query.andWhere(`(${conditions.join(' OR ')})`, params);
       } else {
@@ -580,17 +584,17 @@ export class StudentService {
     // Get assignments from classes
     const classAssignments = classIds.length > 0
       ? await this.assignmentRepository.find({
-          where: classIds.map(id => ({ classId: id, isDeleted: false })),
-          relations: ['submissions', 'submissions.student'],
-        })
+        where: classIds.map(id => ({ classId: id, isDeleted: false })),
+        relations: ['submissions', 'submissions.student'],
+      })
       : [];
 
     // Get assignments from teacher bookings
     const bookingAssignments = teacherBookingIds.length > 0
       ? await this.assignmentRepository.find({
-          where: teacherBookingIds.map(id => ({ teacherBookingId: id, isDeleted: false })),
-          relations: ['submissions', 'submissions.student'],
-        })
+        where: teacherBookingIds.map(id => ({ teacherBookingId: id, isDeleted: false })),
+        relations: ['submissions', 'submissions.student'],
+      })
       : [];
 
     const assignments = [...classAssignments, ...bookingAssignments];

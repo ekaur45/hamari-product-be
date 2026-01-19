@@ -15,6 +15,10 @@ import { LoggerService } from './modules/logger/logger.service';
 import { AppDataSource } from './database/data-source';
 import seedNationalities from './database/seeds/nationality.seed';
 import cookieParser from 'cookie-parser';
+import express from 'express';
+import { PUBLIC_API_PAYMENT_BASE } from './utils/api.constants';
+import bodyParser from 'body-parser';
+
 async function bootstrap() {
   // const httpsOptions = {
   //   key: readFileSync('./src/ssl/server.key'),
@@ -57,18 +61,26 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  const stripeWebhookPath = `/${PUBLIC_API_PAYMENT_BASE}/stripe/webhook`;
 
+  // Stripe raw body middleware
+  app.use(stripeWebhookPath, express.raw({ type: 'application/json' }));
   // ✅ Enable JSON & URL-encoded body parsing
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
-
   app.setGlobalPrefix('/api', {
     exclude: ['/public/*'],
   });
-
+  app.use((req, res, next) => {
+    if (req.originalUrl === stripeWebhookPath) {
+      bodyParser.raw({ type: 'application/json' })(req, res, next);
+    } else {
+      json({ limit: '10mb' })(req, res, next);
+    }
+  });
   // Get logger instance for exception filter
   const exceptionLogger = await app.resolve(LoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(exceptionLogger));

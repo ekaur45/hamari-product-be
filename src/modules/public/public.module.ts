@@ -2,9 +2,12 @@ import { Module } from "@nestjs/common";
 import { PublicController } from "./public.controller";
 import { TeacherModule } from "./teacher/teacher.module";
 import SharedModule from "../shared/shared.module";
+import PaymentModule from "./payment/payment.module";
 
 @Module({
     controllers: [PublicController],
-    imports: [SharedModule, TeacherModule],
+    imports: [SharedModule, TeacherModule, PaymentModule],
+    providers: [],
+    exports: [],
 })
 export class PublicModule { }

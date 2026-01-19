@@ -8,7 +8,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import express from 'express';
+import express, { CookieOptions } from 'express';
 import User from 'src/database/entities/user.entity';
 import { AuthService } from './auth.service';
 import LoginDto from './dto/login.dto';
@@ -35,13 +35,18 @@ export class AuthController {
     res: express.Response): Promise<ApiResponseModel<User>> {
     const user = await this.authService.login(login);
 
-    res.cookie('taleemiyat_token', user.access_token, {
+    const cookiesOptions: CookieOptions = {
       httpOnly: true,
       secure: false,
       sameSite: 'lax',
       path: '/',
       maxAge: 1000 * 60 * 60 * 24 * 1,
-    });
+    }
+    if (process.env.NODE_ENV === 'local') {
+      cookiesOptions.secure = true;
+      cookiesOptions.domain = '.taleemiyat.com';
+    }
+    res.cookie('taleemiyat_token', user.access_token, cookiesOptions);
     return ApiResponseModel.success(user, 'Login successful', '/auth/login');
   }
 
@@ -87,12 +92,18 @@ export class AuthController {
 
   @Get('logout')
   async logout(@Res({ passthrough: true }) res: express.Response): Promise<ApiResponseModel<string>> {
-    res.clearCookie('taleemiyat_token', {
+    const cookiesOptions: CookieOptions = {
       httpOnly: true,
       secure: false,
       sameSite: 'lax',
-      path: '/',   // must match cookie path
-    });
+      path: '/',
+      maxAge: 1000 * 60 * 60 * 24 * 1,
+    }
+    if (process.env.NODE_ENV === 'production') {
+      cookiesOptions.secure = true;
+      cookiesOptions.domain = '.taleemiyat.com';
+    }
+    res.clearCookie('taleemiyat_token', cookiesOptions);
     return ApiResponseModel.success('Logout successful', 'Logout successful');
   }
 }
