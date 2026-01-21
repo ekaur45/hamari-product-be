@@ -121,7 +121,7 @@ export class TeacherController {
     type: ApiResponseModel<ClassEntity[]>,
   })
   async getTeacherClasses(@Request() req: { user: User }): Promise<ApiResponseModel<ClassEntity[]>> {
-    const classes = await this.teacherService.getTeacherClasses({ ...req.user });
+    const classes = await this.teacherService.getTeacherClasses({ ...req.user, isProfileComplete: req.user.isProfileComplete });
     return ApiResponseModel.success(classes, 'Teacher classes retrieved successfully');
   }
 
@@ -132,7 +132,7 @@ export class TeacherController {
     type: ApiResponseModel<Subject[]>,
   })
   async getTeacherSubjects(@Param('teacherId') teacherId: string, @Request() req: { user: User }): Promise<ApiResponseModel<Subject[]>> {
-    const subjects = await this.teacherService.getTeacherSubjects(teacherId, { ...req.user });
+    const subjects = await this.teacherService.getTeacherSubjects(teacherId, { ...req.user, isProfileComplete: req.user.isProfileComplete });
     return ApiResponseModel.success(subjects, 'Teacher subjects retrieved successfully');
   }
 

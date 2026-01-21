@@ -32,8 +32,8 @@ export default class RegisterDto {
   @IsBoolean({ message: 'Agree to terms and conditions is required.' })
   agreeToTerms: boolean;
 
-  @ApiProperty({ required: true })
-  @IsNotEmpty({ message: 'Phone is required.' })
+  @ApiProperty({ required: false })
   @IsString({ message: 'Phone must be a string.' })
-  phone: string;
+  @IsOptional()
+  phone?: string;
 }

@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import UserDetail from "./user-details.entity";
 @Entity('nationalities')
 export default class Nationality {
     @PrimaryGeneratedColumn('uuid')
@@ -9,4 +10,7 @@ export default class Nationality {
 
     @Column({ length: 255 })
     code: string;
+
+    @OneToMany(() => UserDetail, (userDetail) => userDetail.nationality)
+    userDetails: UserDetail[];
 }

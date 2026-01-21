@@ -123,3 +123,10 @@ export enum CurrencyStatus {
   INACTIVE = 'inactive',
   SUSPENDED = 'suspended',
 }
+
+export enum OtpType {
+  LOGIN = 'login',
+  REGISTER = 'register',
+  FORGOT_PASSWORD = 'forgot_password',
+  VERIFY_EMAIL = 'verify_email',
+}

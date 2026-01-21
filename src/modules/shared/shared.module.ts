@@ -26,6 +26,8 @@ import AssignmentSubmission from 'src/database/entities/assignment-submission.en
 import BookPaymentLog from 'src/database/entities/bookpayment-log.entity';
 import { CurrencyService } from './currency/currency.service';
 import Currency from 'src/database/entities/currency.entity';
+import { EmailModule } from './email/email.module';
+import Otp from 'src/database/entities/otp.entity';
 
 const ENTITIES = [
   User,
@@ -51,12 +53,13 @@ const ENTITIES = [
   Assignment,
   AssignmentSubmission,
   BookPaymentLog,
-  Currency
+  Currency,
+  Otp
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([...ENTITIES])],
+  imports: [TypeOrmModule.forFeature([...ENTITIES]), EmailModule],
   providers: [AdminActionLoggerInterceptor, CurrencyService],
-  exports: [TypeOrmModule.forFeature([...ENTITIES]), AdminActionLoggerInterceptor, CurrencyService],
+  exports: [TypeOrmModule.forFeature([...ENTITIES]), AdminActionLoggerInterceptor, CurrencyService, EmailModule],
 })
 export default class SharedModule { }

@@ -2,6 +2,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -21,7 +22,7 @@ export default class UserDetail {
 
   @Column('uuid', { nullable: true })
   nationalityId?: string;
-  @OneToOne(() => Nationality, (nationality) => nationality.id)
+  @ManyToOne(() => Nationality, (nationality) => nationality.id)
   @JoinColumn({ name: 'nationalityId' })
   nationality?: Nationality;
 

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>OTP Verification | {{companyName}}</title>
+  <style>
+    /* CSS RESET */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f7f9fc 0%, #edf1f7 100%);
+      font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    table {
+      border-collapse: collapse !important;
+      width: 100%;
+    }
+    img {
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* RESPONSIVE CONTAINER */
+    .email-wrapper {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* CARD DESIGN */
+    .email-card {
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(13, 42, 87, 0.08);
+      border: 1px solid #e8edf5;
+    }
+
+    /* HEADER */
+    .email-header {
+      background: linear-gradient(135deg, #0d2a57 0%, #1a3f8c 100%);
+      padding: 28px 20px;
+      text-align: center;
+      position: relative;
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 8px 16px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .company-logo {
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .header-title {
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: 700;
+      margin-top: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    /* BODY CONTENT */
+    .email-body {
+      padding: 40px 35px;
+    }
+    .greeting {
+      color: #0d2a57;
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    .message {
+      color: #4a5568;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    /* OTP CONTAINER */
+    .otp-container {
+      background: linear-gradient(135deg, #fff9f6 0%, #fff4ef 100%);
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+      text-align: center;
+      border: 1px solid #ffe8dc;
+    }
+    .otp-label {
+      color: #666666;
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .otp-code {
+      font-family: 'Courier New', monospace;
+      font-size: 42px;
+      font-weight: 700;
+      color: #e85b0f;
+      letter-spacing: 10px;
+      margin: 15px 0;
+      padding: 0 10px;
+      display: inline-block;
+      position: relative;
+    }
+    .otp-code::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #e85b0f, transparent);
+      border-radius: 2px;
+    }
+    .otp-expiry {
+      color: #718096;
+      font-size: 14px;
+      margin-top: 15px;
+      font-weight: 500;
+    }
+    .expiry-timer {
+      color: #e85b0f;
+      font-weight: 700;
+    }
+
+    /* CTA BUTTON */
+    .cta-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #e85b0f 0%, #f07c3a 100%);
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 600;
+      padding: 16px 40px;
+      border-radius: 10px;
+      text-align: center;
+      margin: 25px 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(232, 91, 15, 0.2);
+      border: none;
+      cursor: pointer;
+    }
+    .cta-button:hover {
+      background: linear-gradient(135deg, #d4530d 0%, #e86f2f 100%);
+      box-shadow: 0 6px 20px rgba(232, 91, 15, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* SECURITY NOTE */
+    .security-note {
+      background: #f8fafc;
+      border-left: 4px solid #0d2a57;
+      padding: 18px;
+      margin: 30px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .security-title {
+      color: #0d2a57;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .security-text {
+      color: #666666;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* FOOTER */
+    .email-footer {
+      background: #f8fafc;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e8edf5;
+    }
+    .footer-text {
+      color: #718096;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .social-links {
+      margin: 20px 0;
+    }
+    .social-icon {
+      display: inline-block;
+      margin: 0 8px;
+      padding: 8px;
+      background: #ffffff;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .social-icon:hover {
+      background: #e8edf5;
+      transform: translateY(-2px);
+    }
+    .contact-info {
+      color: #4a5568;
+      font-size: 13px;
+      margin-top: 20px;
+    }
+    .contact-link {
+      color: #e85b0f;
+      font-weight: 500;
+    }
+    .copyright {
+      color: #a0aec0;
+      font-size: 12px;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    /* MOBILE RESPONSIVE */
+    @media only screen and (max-width: 620px) {
+      .email-wrapper {
+        padding: 10px;
+      }
+      .email-body {
+        padding: 30px 20px;
+      }
+      .header-title {
+        font-size: 22px;
+      }
+      .greeting {
+        font-size: 18px;
+      }
+      .otp-code {
+        font-size: 36px;
+        letter-spacing: 8px;
+      }
+      .cta-button {
+        padding: 14px 30px;
+        font-size: 16px;
+      }
+    }
+
+    @media only screen and (max-width: 400px) {
+      .otp-code {
+        font-size: 32px;
+        letter-spacing: 6px;
+      }
+      .email-body {
+        padding: 25px 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="email-wrapper">
+    <table class="email-card" role="presentation" cellpadding="0" cellspacing="0">
+      <!-- HEADER -->
+      <tr>
+        <td class="email-header">
+          <div class="header-badge">
+            <span class="company-logo">{{companyName}}</span>
+          </div>
+          <h1 class="header-title">Verify Your Account</h1>
+        </td>
+      </tr>
+
+      <!-- BODY -->
+      <tr>
+        <td class="email-body">
+          <h2 class="greeting">Hello {{name}},</h2>
+          
+          <p class="message">
+            You've requested to verify your account. Use the One-Time Password (OTP) below to complete your sign-in process.
+          </p>
+
+          <!-- OTP CONTAINER -->
+          <div class="otp-container">
+            <span class="otp-label">Your verification code</span>
+            <div class="otp-code">{{otpCode}}</div>
+            <div class="otp-expiry">
+              Expires in: <span class="expiry-timer">10 minutes</span>
+            </div>
+          </div>
+
+          <!-- CTA BUTTON -->
+          <div style="text-align: center;">
+            <a href="{{verificationUrl}}" class="cta-button">Verify Account Now</a>
+          </div>
+
+          <p class="message">
+            For security reasons, please do not share this OTP with anyone. Our team will never ask for your verification code.
+          </p>
+
+          <!-- SECURITY NOTE -->
+          <div class="security-note">
+            <div class="security-title">
+              <span>🔒 Security Notice</span>
+            </div>
+            <p class="security-text">
+              This OTP was generated on {{generatedTime}}. If you didn't request this verification, please ignore this email or 
+              <a href="{{supportLink}}" style="color: #e85b0f; font-weight: 500;">contact our support team</a> immediately.
+            </p>
+          </div>
+
+          <p class="message" style="margin-top: 30px;">
+            Having trouble with the OTP? You can also verify your account by clicking the button above.
+          </p>
+        </td>
+      </tr>
+
+      <!-- FOOTER -->
+      <tr>
+        <td class="email-footer">
+          <p class="footer-text">
+            Need help? We're here for you. Visit our 
+            <a href="{{helpCenterLink}}" style="color: #e85b0f; font-weight: 500;">Help Center</a> 
+            or reply to this email for assistance.
+          </p>
+
+          <div class="social-links">
+            <a href="#" class="social-icon">🌐 Website</a>
+            <a href="#" class="social-icon">📱 Mobile App</a>
+            <a href="#" class="social-icon">💼 LinkedIn</a>
+          </div>
+
+          <div class="contact-info">
+            <p>
+              {{companyName}}<br />
+              {{companyAddress}}<br />
+              Email: <a href="mailto:{{companyEmail}}" class="contact-link">{{companyEmail}}</a><br />
+              Phone: <a href="tel:{{companyPhone}}" class="contact-link">{{companyPhone}}</a>
+            </p>
+          </div>
+
+          <div class="copyright">
+            © {{year}} {{companyName}}. All rights reserved.<br />
+            This is an automated message, please do not reply directly to this email.
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

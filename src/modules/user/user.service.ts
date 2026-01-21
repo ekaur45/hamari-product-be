@@ -93,7 +93,10 @@ export default class UserService {
     }
 
     const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return {
+      ...userWithoutPassword,
+      isProfileComplete: user.isProfileComplete,
+    };
   }
 
   private async getOrCreateDetails(userId: string): Promise<UserDetail> {

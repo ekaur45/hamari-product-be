@@ -14,6 +14,8 @@ import UserEducation from './user-education.entity';
 import { Student } from './student.entity';
 import { Teacher } from './teacher.entity';
 import { Parent } from './parent.entity';
+import { Expose } from 'class-transformer';
+import Otp from './otp.entity';
 
 
 @Entity('users')
@@ -70,4 +72,64 @@ export default class User {
 
   @OneToOne(() => Parent, (parent) => parent.user,{cascade: true})
   parent?: Parent | null;
+
+  @Column({ default: false })
+  isEmailVerified: boolean;
+
+  @OneToMany(() => Otp, (otp) => otp.user,{cascade: true})
+  otps?: Otp[] | null;
+
+  @Expose()
+  public get isProfileComplete(): boolean {
+    if(this.role === UserRole.ADMIN){
+      return true;
+    }
+    const hasBaseInfo =
+      !!this.firstName &&
+      !!this.lastName &&
+      !!this.details?.phone &&
+      !!this.details?.nationalityId &&
+      !!this.details?.dateOfBirth &&
+      !!this.details?.gender &&
+      !!this.details?.address &&
+      !!this.details?.city &&
+      !!this.details?.state &&
+      !!this.details?.country &&
+      !!this.details?.zipCode;
+  
+    if (this.role === UserRole.TEACHER) {
+      return (
+        hasBaseInfo &&
+        !!this.teacher?.tagline &&
+        this.teacher?.yearsOfExperience !== null &&
+        this.teacher?.yearsOfExperience !== undefined &&
+        !!this.teacher?.preferredSubject &&
+        !!this.teacher?.introduction &&
+        !!this.teacher?.introductionVideoUrl &&
+        !!this.teacher?.introductionVideoThumbnailUrl &&
+        !!this.teacher?.introductionVideoTitle &&
+        !!this.teacher?.introductionVideoDescription &&
+        this.teacher?.hourlyRate !== null &&
+        this.teacher?.hourlyRate !== undefined &&
+        this.teacher?.monthlyRate !== null &&
+        this.teacher?.monthlyRate !== undefined &&
+        (this.educations?.length ?? 0) > 0 &&
+        (this.teacher?.teacherSubjects?.length ?? 0) > 0 &&
+        (this.teacher?.availabilities?.length ?? 0) > 0
+      );
+    }
+  
+    if (this.role === UserRole.STUDENT) {
+      return (
+        hasBaseInfo
+      );
+    }
+  
+    if (this.role === UserRole.PARENT) {
+      return hasBaseInfo;
+    }
+  
+    return false;
+  }
+  
 }

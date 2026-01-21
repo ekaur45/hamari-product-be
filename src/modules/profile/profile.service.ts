@@ -38,7 +38,7 @@ export class ProfileService {
     ) {
     }
 
-    async getProfile(user: User) {
+    async getProfile(user: Omit<User, 'password'>) {
         const query = this.userRepository
             .createQueryBuilder('user')
             .leftJoinAndSelect('user.details', 'details', 'user.id = details.userId')
@@ -54,7 +54,7 @@ export class ProfileService {
                 .leftJoinAndSelect(
                     'teacher.teacherSubjects',
                     'teacherSubjects',
-                    'teacherSubjects.isDeleted = false' // 👈 Filter here
+                    'teacherSubjects.isDeleted = false'
                 )
                 .leftJoinAndSelect('teacherSubjects.subject', 'subject')
                 .leftJoinAndSelect('teacher.availabilities', 'availabilities', 'availabilities.isDeleted = false');
@@ -125,7 +125,7 @@ export class ProfileService {
         // if (updateProfileDto.phone) {
         //     userData.phone = updateProfileDto.phone;
         // }
-        await this.userDetailRepository.upsert(userData.details, { conflictPaths: ['userId'] });
+        await this.userDetailRepository.upsert(userData.details, { conflictPaths: ['userId','nationalityId'] });
         userData = await this.userRepository.findOne({
             where: { id: user.id },
         });
