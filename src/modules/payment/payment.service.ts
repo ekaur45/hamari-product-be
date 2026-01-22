@@ -15,6 +15,7 @@ import TeacherSubject from 'src/database/entities/teacher-subject.entity';
 import Stripe from 'stripe';
 import BookPaymentLog from 'src/database/entities/bookpayment-log.entity';
 import { ConfigService } from '@nestjs/config';
+import Currency from 'src/database/entities/currency.entity';
 
 @Injectable()
 export class PaymentService {
@@ -29,7 +30,8 @@ export class PaymentService {
     private readonly teacherSubjectRepository: Repository<TeacherSubject>,
     @InjectRepository(BookPaymentLog)
     private readonly bookPaymentLogRepository: Repository<BookPaymentLog>,
-
+    @InjectRepository(Currency)
+    private readonly currencyRepository: Repository<Currency>,
     private readonly configService: ConfigService,
   ) {
 
@@ -39,9 +41,10 @@ export class PaymentService {
 
   }
 
-  async createPaymentIntent(createPaymentIntentDto: CreatePaymentIntentDto, user: User): Promise<PaymentIntentDto> {
+  async createPaymentIntent(createPaymentIntentDto: CreatePaymentIntentDto, user: User, currency: string): Promise<PaymentIntentDto> {
     this.logger.log(`Creating payment intent for user ${user.id}`);
     this.logger.log(`Payment intent data: ${JSON.stringify(createPaymentIntentDto)}`);
+    this.logger.log(`Currency: ${currency}`);
     // get student id from user
     const student = await this.studentRepository.findOne({
       where: {
@@ -79,7 +82,7 @@ export class PaymentService {
       subjectId: createPaymentIntentDto.subjectId,
       teacherSubjectId: teacherSubject.id.toString(),
       availabilityId: createPaymentIntentDto.slotId,
-      totalAmount: teacherSubject.hourlyRate,
+      totalAmount: await this.convertToBaseCurrency(teacherSubject.hourlyRate || 0, currency), // convert to base currency
     });
     if (teacherBooking) {
       const paymentIntent = await this.stripe.checkout.sessions.create({
@@ -87,7 +90,7 @@ export class PaymentService {
         line_items: [
           {
             price_data: {
-              currency: 'pkr',
+              currency: "usd",
               unit_amount: Math.round((teacherBooking.totalAmount || 0) * 100),
               product_data: {
                 name: 'Teacher Booking',
@@ -127,6 +130,30 @@ export class PaymentService {
       };
     }
     throw new BadRequestException('Payment intent creation failed');
+  }
+
+
+  private async convertToBaseCurrency(amount: number, currency: string): Promise<number> {
+    const baseCurrency = await this.currencyRepository.findOne({
+      where: {
+        isBase: true,
+      },
+    });
+    if (!baseCurrency) {
+      return amount;
+    }
+    if(currency == baseCurrency.code) {
+      return amount;
+    }
+    const selectedCurrency = await this.currencyRepository.findOne({
+      where: {
+        code: currency,
+      },
+    });
+    if (!selectedCurrency) {
+      return amount;
+    }
+    return (Number(amount) * baseCurrency.exchangeRate) / selectedCurrency.exchangeRate;
   }
 
 }

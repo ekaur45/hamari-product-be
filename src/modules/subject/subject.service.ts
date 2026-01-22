@@ -7,6 +7,7 @@ import TeacherSubject from 'src/database/entities/teacher-subject.entity';
 import UpdateSubjectRatesDto from './dto/update-subject-rates.dto';
 import User from 'src/database/entities/user.entity';
 import { GetSubjectRequest } from './dto/get-subject.request';
+import Currency from 'src/database/entities/currency.entity';
 
 
 @Injectable()
@@ -16,6 +17,8 @@ export class SubjectService {
     private readonly subjectRepository: Repository<Subject>,
     @InjectRepository(TeacherSubject)
     private readonly teacherSubjectRepository: Repository<TeacherSubject>,
+    @InjectRepository(Currency)
+    private readonly currencyRepository: Repository<Currency>,
   ) { }
 
   async getSubjects({ name }: { name: string }): Promise<Subject[]> {
@@ -62,7 +65,7 @@ export class SubjectService {
   }
 
 
-  async updateSubjectRates(updateSubjectRatesDto: Array<UpdateSubjectRatesDto>, user: User): Promise<TeacherSubject[]> {
+  async updateSubjectRates(updateSubjectRatesDto: Array<UpdateSubjectRatesDto>, user: User, currency: string): Promise<TeacherSubject[]> {
     const teacherSubjects = await this.teacherSubjectRepository.find({
       where: { id: In(updateSubjectRatesDto.map(dto => dto.id)), isDeleted: false },
     });
@@ -77,8 +80,8 @@ export class SubjectService {
       if (!teacherSubject) {
         throw new NotFoundException(`Teacher subject with ID ${dto.id} not found`);
       }
-      teacherSubject.hourlyRate = dto.hourlyRate;
-      teacherSubject.monthlyRate = dto.monthlyRate;
+      teacherSubject.hourlyRate = await this.convertToBaseCurrency(dto.hourlyRate, currency);
+      teacherSubject.monthlyRate = await this.convertToBaseCurrency(dto.monthlyRate, currency);
       await this.teacherSubjectRepository.save(teacherSubject);
     }
     return teacherSubjects;
@@ -105,6 +108,28 @@ export class SubjectService {
       }
     };
 
+  }
+  private async convertToBaseCurrency(amount: number, currency: string): Promise<number> {
+    const baseCurrency = await this.currencyRepository.findOne({
+      where: {
+        isBase: true,
+      },
+    });
+    if (!baseCurrency) {
+      return amount;
+    }
+    if(currency == baseCurrency.code) {
+      return amount;
+    }
+    const selectedCurrency = await this.currencyRepository.findOne({
+      where: {
+        code: currency,
+      },
+    });
+    if (!selectedCurrency) {
+      return amount;
+    }
+    return (Number(amount) * baseCurrency.exchangeRate) / selectedCurrency.exchangeRate;
   }
 }
 

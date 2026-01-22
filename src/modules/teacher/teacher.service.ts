@@ -17,6 +17,7 @@ import Assignment from 'src/database/entities/assignment.entity';
 import AssignmentSubmission from 'src/database/entities/assignment-submission.entity';
 import Review from 'src/database/entities/review.entity';
 import { UserRole } from 'src/modules/shared/enums';
+import Currency from 'src/database/entities/currency.entity';
 @Injectable()
 export class TeacherService {
   constructor(
@@ -38,6 +39,8 @@ export class TeacherService {
     private readonly submissionRepository: Repository<AssignmentSubmission>,
     @InjectRepository(Review)
     private readonly reviewRepository: Repository<Review>,
+    @InjectRepository(Currency)
+    private readonly currencyRepository: Repository<Currency>,
   ) { }
 
   async getTeachersWithPagination(
@@ -82,7 +85,7 @@ export class TeacherService {
     return teacher;
   }
 
-  async updateTeacherRates(teacherId: string, updateTeacherRatesDto: UpdateTeacherRatesDto, user: User): Promise<Teacher> {
+  async updateTeacherRates(teacherId: string, updateTeacherRatesDto: UpdateTeacherRatesDto, user: User, currency: string): Promise<Teacher> {
     const teacher = await this.teacherRepository.findOne({
       where: { id: teacherId, isDeleted: false },
     });
@@ -92,8 +95,8 @@ export class TeacherService {
     if (teacher.userId !== user.id) {
       throw new ForbiddenException('You can only update your own rates');
     }
-    teacher.hourlyRate = updateTeacherRatesDto.hourlyRate;
-    teacher.monthlyRate = updateTeacherRatesDto.monthlyRate;
+    teacher.hourlyRate = await this.convertToBaseCurrency(updateTeacherRatesDto.hourlyRate, currency);
+    teacher.monthlyRate = await this.convertToBaseCurrency(updateTeacherRatesDto.monthlyRate, currency);
     await this.teacherRepository.save(teacher);
     return teacher;
   }
@@ -482,5 +485,27 @@ export class TeacherService {
       totalReviews,
       ratingDistribution,
     };
+  }
+  private async convertToBaseCurrency(amount: number, currency: string): Promise<number> {
+    const baseCurrency = await this.currencyRepository.findOne({
+      where: {
+        isBase: true,
+      },
+    });
+    if (!baseCurrency) {
+      return amount;
+    }
+    if(currency == baseCurrency.code) {
+      return amount;
+    }
+    const selectedCurrency = await this.currencyRepository.findOne({
+      where: {
+        code: currency,
+      },
+    });
+    if (!selectedCurrency) {
+      return amount;
+    }
+    return (Number(amount) * baseCurrency.exchangeRate) / selectedCurrency.exchangeRate;
   }
 }

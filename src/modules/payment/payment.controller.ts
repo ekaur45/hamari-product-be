@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Headers,
   Post,
   Request,
   UseGuards,
@@ -36,8 +37,9 @@ export class PaymentController {
   async createPaymentIntent(
     @Body() createPaymentIntentDto: CreatePaymentIntentDto,
     @Request() req: { user: User },
+    @Headers('X-Currency') currency: string,
   ): Promise<ApiResponseModel<PaymentIntentDto>> {
-    const paymentIntent = await this.paymentService.createPaymentIntent(createPaymentIntentDto, req.user);
+    const paymentIntent = await this.paymentService.createPaymentIntent(createPaymentIntentDto, req.user, currency || 'USD');
     return ApiResponseModel.success(paymentIntent, 'Payment intent created successfully');
   }
 }

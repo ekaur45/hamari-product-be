@@ -83,7 +83,13 @@ export class TeacherService {
                         },
                     },
                 },
+                {
+                    user: {
+                        hasCompletedProfile: true,
+                    },
+                },
             ],
+
             take: pagination.limit,
             skip: (pagination.page - 1) * pagination.limit,
             order: {
@@ -102,6 +108,11 @@ export class TeacherService {
     }
     async getFeaturedTeachersWithPagination(pagination: PaginationRequest) {
         const [teachers, count] = await this.teacherRepository.findAndCount({
+            where: {
+                user: {
+                    hasCompletedProfile: true,
+                },
+            },
             take: 3,
             skip: 0,
             order: {
@@ -119,91 +130,7 @@ export class TeacherService {
         }
     }
 
-    async getTeacherDetail(teacherId: string) {
-        // const teacher = await this.teacherRepository.findOne({
-        //     where: {
-        //         id: teacherId,
-        //         teacherBookings: {
-        //             status: BookingStatus.CONFIRMED,
-        //             isDeleted: false,
-        //         },
-        //     },
-        //     relations: ['user', 'user.details', 'user.details.nationality', 'user.educations', 'teacherSubjects', 'teacherSubjects.subject', 'availabilities', 'teacherBookings'],
-        //     select: {
-        //         id: true, // 🔥 MUST HAVE
-        //         tagline: true,
-        //         yearsOfExperience: true,
-        //         preferredSubject: true,
-        //         introduction: true,
-        //         introductionVideoUrl: true,
-        //         introductionVideoThumbnailUrl: true,
-        //         introductionVideoTitle: true,
-        //         introductionVideoDescription: true,
-        //         specialization: true,
-        //         hourlyRate: true,
-        //         monthlyRate: true,
-        //         classes: true,
-
-        //         user: {
-        //             id: true, // 🔥 MUST HAVE
-        //             firstName: true,
-        //             lastName: true,
-        //             email: true,
-        //             username: true,
-        //             details: {
-        //                 id: true, // 🔥 MUST HAVE
-        //                 bio: true,
-        //                 profileImage: true,
-        //                 phone: true,
-        //                 nationality: true,
-        //                 dateOfBirth: true,
-        //                 gender: true,
-        //                 address: true,
-        //                 city: true,
-        //                 state: true,
-        //                 country: true,
-        //                 zipCode: true,
-        //                 skills: true,
-        //             },
-        //             educations: {
-        //                 id: true, // 🔥 MUST HAVE
-        //                 instituteName: true,
-        //                 degreeName: true,
-        //                 startedYear: true,
-        //                 endedYear: true,
-        //                 isStillStudying: true,
-        //                 remarks: true,
-        //             },
-        //         },
-
-        //         teacherSubjects: {
-        //             id: true, // 🔥 MUST HAVE
-        //             subject: true,
-        //             hourlyRate: true,
-        //             monthlyRate: true,
-        //         },
-
-        //         availabilities: {
-        //             id: true, // 🔥 MUST HAVE
-        //             dayOfWeek: true,
-        //             startTime: true,
-        //             endTime: true,
-        //         },
-
-        //         teacherBookings: {
-        //             id: true, // 🔥 MUST HAVE
-        //             bookingDate: true,
-        //             totalAmount: true,
-        //             paidAmount: true,
-        //             dueAmount: true,
-        //             discountAmount: true,
-        //             status: true,
-        //             createdAt: true,
-        //             updatedAt: true,
-        //             isDeleted: true,
-        //         }
-        //     },
-        // })
+    async getTeacherDetail(teacherId: string) {        
         const teacher = await this.teacherRepository
         .createQueryBuilder('teacher')
       
@@ -230,7 +157,7 @@ export class TeacherService {
         .leftJoinAndSelect('teacherBookings.availability', 'availability')
       
         // ================= WHERE =================
-        .where('teacher.id = :teacherId', { teacherId })
+        .where('teacher.id = :teacherId AND user.hasCompletedProfile = true', { teacherId })
       
         // ================= SELECT =================
         .select([

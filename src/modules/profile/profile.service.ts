@@ -353,4 +353,16 @@ export class ProfileService {
         //await this.userRepository.save(userData);
         return userData;
     }
+    async completeProfile(id: string, user: User) {
+        const userData = await this.userRepository.findOne({
+            where: { id: user.id },
+            relations: ['details', 'educations', 'teacher', 'teacher.teacherSubjects', 'teacher.availabilities'],
+        });
+        if (!userData) {
+            throw new NotFoundException('User not found');
+        }
+        userData.hasCompletedProfile = userData.isProfileComplete;
+        await this.userRepository.save(userData);
+        return userData;
+    }
 }

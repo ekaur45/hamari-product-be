@@ -79,6 +79,9 @@ export default class User {
   @OneToMany(() => Otp, (otp) => otp.user,{cascade: true})
   otps?: Otp[] | null;
 
+  @Column({ type: 'boolean', default: false })
+  hasCompletedProfile: boolean;
+
   @Expose()
   public get isProfileComplete(): boolean {
     if(this.role === UserRole.ADMIN){

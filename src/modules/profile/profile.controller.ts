@@ -219,4 +219,19 @@ export class ProfileController {
         const profilePicture = await this.profileService.updateProfilePicture(req.user.id, url, req.user);
         return ApiResponseModel.success(profilePicture, 'Profile picture updated successfully');
     }
+
+
+    @Put(':id/complete-profile')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    async completeProfile(
+        @Param('id') id: string,
+        @Request() req: { user: User }
+    ): Promise<ApiResponseModel<Omit<User, 'password'>>> {
+        if (id !== req.user.id) {
+            throw new ForbiddenException('You can only complete your own profile');
+        }
+        const profile = await this.profileService.completeProfile(id, req.user);
+        return ApiResponseModel.success(profile, 'Profile completed successfully');
+    }
 }

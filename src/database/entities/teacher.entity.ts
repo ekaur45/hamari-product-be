@@ -44,7 +44,7 @@ export class Teacher {
   @Column({ nullable: true })
   specialization: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   hourlyRate: number;
 
   @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.teacher)

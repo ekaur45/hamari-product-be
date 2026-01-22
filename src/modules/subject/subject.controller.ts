@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Query, Request, SetMetadata, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Put, Query, Request, SetMetadata, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
 import { SubjectService } from './subject.service';
@@ -84,8 +84,10 @@ export class SubjectController {
     description: 'Subject rates updated successfully',
     type: ApiResponseModel<TeacherSubject[]>,
   })
-  async updateSubjectRates(@Body() updateSubjectRatesDto: Array<UpdateSubjectRatesDto>, @Request() req: { user: User }): Promise<ApiResponseModel<TeacherSubject[]>> {
-    const teacherSubjects = await this.subjectService.updateSubjectRates(updateSubjectRatesDto, req.user);
+  async updateSubjectRates(@Body() updateSubjectRatesDto: Array<UpdateSubjectRatesDto>, @Request() req: { user: User },
+    @Headers('X-Currency') currency: string,
+): Promise<ApiResponseModel<TeacherSubject[]>> {
+    const teacherSubjects = await this.subjectService.updateSubjectRates(updateSubjectRatesDto, req.user, currency || 'USD');
     return ApiResponseModel.success(teacherSubjects, 'Subject rates updated successfully');
   }
 

@@ -4,6 +4,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  Headers,
   Param,
   Patch,
   Post,
@@ -86,9 +87,10 @@ export class TeacherController {
   async updateTeacherRates(
     @Param('teacherId') teacherId: string,
     @Body() updateTeacherRatesDto: UpdateTeacherRatesDto,
-    @Request() req: { user: User }
+    @Request() req: { user: User },
+    @Headers('X-Currency') currency: string,
   ): Promise<ApiResponseModel<Teacher>> {
-    const teacher = await this.teacherService.updateTeacherRates(teacherId, updateTeacherRatesDto, req.user);
+    const teacher = await this.teacherService.updateTeacherRates(teacherId, updateTeacherRatesDto, req.user, currency || 'USD');
     return ApiResponseModel.success(teacher, 'Teacher rates updated successfully');
   }
 

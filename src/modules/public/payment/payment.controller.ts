@@ -4,11 +4,12 @@ import { PUBLIC_API_PAYMENT_BASE } from "src/utils/api.constants";
 import { ConfigService } from "@nestjs/config";
 import Stripe from "stripe";
 import express from "express";
+import { LoggerService } from "src/modules/logger/logger.service";
 
 @Controller(PUBLIC_API_PAYMENT_BASE)
 export default class PaymentController {
     private readonly stripe: Stripe;
-    constructor(private readonly paymentService: PaymentService, private readonly configService: ConfigService) {
+    constructor(private readonly paymentService: PaymentService, private readonly configService: ConfigService, private readonly logger: LoggerService) {
         this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || '', {
             apiVersion: '2025-12-15.clover',
         });
@@ -30,7 +31,7 @@ export default class PaymentController {
 
             if (event.type === 'payment_intent.succeeded') {
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
-                console.log('Payment succeeded:', paymentIntent.id);
+                this.logger.log('Payment succeeded:', paymentIntent.id);
             }
             if (event.type === 'checkout.session.completed') {
                 const checkoutSession = event.data.object as Stripe.Checkout.Session;
@@ -39,7 +40,7 @@ export default class PaymentController {
             res.json({ received: true });
 
         } catch (err) {
-            console.error('Webhook Error:', err.message);
+            this.logger.error('Webhook Error:', err.message);
             res.json({ received: false });
         }
     }
