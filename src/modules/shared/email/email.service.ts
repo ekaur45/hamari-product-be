@@ -55,7 +55,7 @@ export class EmailService {
             verificationUrl: this.configService.get('COMPANY_VERIFICATION_URL') + otpCode,
             generatedTime: new Date().toISOString(),
         }
-        const mail = await this.smtpService.sendEmail("ekaur45dev@gmail.com", 'Login OTP Verification', 'otp-verification', context);
+        const mail = await this.smtpService.sendEmail(user.email, 'Login OTP Verification', 'otp-verification', context);
         return mail;
     }
 }
