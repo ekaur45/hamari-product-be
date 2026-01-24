@@ -58,4 +58,15 @@ export class EmailService {
         const mail = await this.smtpService.sendEmail(user.email, 'Login OTP Verification', 'otp-verification', context);
         return mail;
     }
+
+
+    async sendWelcomeEmail(user: User): Promise<SentMessageInfo> {
+        const context = {
+            ...this.getCompanyDetails(),
+            name: user.firstName + ' ' + user.lastName,
+            dashboardLink: this.configService.get('COMPANY_DASHBOARD_LINK'),
+        }
+        const mail = await this.smtpService.sendEmail(user.email, 'Welcome to Taleemiyat', 'welcome', context);
+        return mail;
+    }
 }

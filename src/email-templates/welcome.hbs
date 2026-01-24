@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Welcome to {{companyName}}</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100% !important;
+      margin: 0;
+      padding: 0;
+      background: #f7f9fc;
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    img {
+      border: 0;
+      outline: none;
+      text-decoration: none;
+      display: block;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    .email-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .email-card {
+      background: #ffffff;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #e8edf5;
+    }
+
+    .email-header {
+      background: #0d2a57;
+      padding: 30px 20px;
+      text-align: center;
+    }
+
+    .company-logo {
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .header-title {
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .email-body {
+      padding: 40px 30px;
+    }
+
+    .greeting {
+      color: #0d2a57;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .message {
+      color: #4a5568;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .welcome-box {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 25px;
+      margin: 30px 0;
+      text-align: center;
+      border: 1px solid #e8edf5;
+    }
+
+    .welcome-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #0d2a57;
+      margin-bottom: 10px;
+    }
+
+    .welcome-text {
+      font-size: 15px;
+      color: #666666;
+      line-height: 1.5;
+    }
+
+    .cta-wrapper {
+      text-align: center;
+      margin: 35px 0;
+    }
+
+    .cta-button {
+      display: inline-block;
+      background: #e85b0f;
+      color: #ffffff !important;
+      font-size: 16px;
+      font-weight: bold;
+      padding: 15px 36px;
+      border-radius: 8px;
+    }
+
+    .email-footer {
+      background: #f8fafc;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e8edf5;
+    }
+
+    .footer-text {
+      color: #718096;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .contact-info {
+      font-size: 13px;
+      color: #4a5568;
+      margin-top: 20px;
+    }
+
+    .copyright {
+      font-size: 12px;
+      color: #a0aec0;
+      margin-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 15px;
+    }
+
+    @media only screen and (max-width: 600px) {
+      .email-body {
+        padding: 30px 20px;
+      }
+      .header-title {
+        font-size: 22px;
+      }
+      .greeting {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="email-wrapper">
+    <table class="email-card" role="presentation">
+      
+      <!-- HEADER -->
+      <tr>
+        <td class="email-header">
+          <div class="company-logo">{{companyName}}</div>
+          <div class="header-title">Welcome Aboard 🎉</div>
+        </td>
+      </tr>
+
+      <!-- BODY -->
+      <tr>
+        <td class="email-body">
+          <div class="greeting">Hi {{name}},</div>
+
+          <p class="message">
+            We’re excited to have you with <strong>{{companyName}}</strong>! Your account has been successfully created, and you’re all set to get started.
+          </p>
+
+          <div class="welcome-box">
+            <div class="welcome-title">Here’s what you can do next</div>
+            <div class="welcome-text">
+              • Explore your dashboard<br />
+              • Complete your profile<br />
+              • Start using our features right away
+            </div>
+          </div>
+
+          <div class="cta-wrapper">
+            <a href="{{dashboardLink}}" class="cta-button">
+              Go to Dashboard
+            </a>
+          </div>
+
+          <p class="message">
+            If you ever need help, our support team is just a click away. We’re here to make your experience smooth and successful.
+          </p>
+
+          <p class="message">
+            Welcome once again, and happy exploring! 🚀
+          </p>
+        </td>
+      </tr>
+
+      <!-- FOOTER -->
+      <tr>
+        <td class="email-footer">
+          <p class="footer-text">
+            Need help? Visit our 
+            <a href="{{helpCenterLink}}" style="color:#e85b0f; font-weight:bold;">Help Center</a> 
+            or contact our support team anytime.
+          </p>
+
+          <div class="contact-info">
+            {{companyName}}<br />
+            {{companyAddress}}<br />
+            Email: <a href="mailto:{{companyEmail}}" style="color:#e85b0f;">{{companyEmail}}</a><br />
+            Phone: {{companyPhone}}
+          </div>
+
+          <div class="copyright">
+            © {{year}} {{companyName}}. All rights reserved.
+          </div>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</body>
+</html>

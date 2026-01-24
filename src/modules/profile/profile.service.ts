@@ -10,6 +10,7 @@ import UserEducation from 'src/database/entities/user-education.entity';
 import TeacherSubject from 'src/database/entities/teacher-subject.entity';
 import Subject from 'src/database/entities/subject.entity';
 import Availability, { AvailabilityDay } from 'src/database/entities/availablility.entity';
+import { EmailService } from '../shared/email/email.service';
 
 const logger = new Logger('ProfileService');
 
@@ -35,6 +36,7 @@ export class ProfileService {
 
         @InjectRepository(UserEducation)
         private readonly userEducationRepository: Repository<UserEducation>,
+        private readonly emailService: EmailService,
     ) {
     }
 
@@ -42,6 +44,7 @@ export class ProfileService {
         const query = this.userRepository
             .createQueryBuilder('user')
             .leftJoinAndSelect('user.details', 'details', 'user.id = details.userId')
+            .leftJoinAndSelect('details.nationality', 'nationality')
             .leftJoinAndSelect('user.educations', 'educations');
 
         if (user.role === UserRole.STUDENT) {
@@ -363,6 +366,7 @@ export class ProfileService {
         }
         userData.hasCompletedProfile = userData.isProfileComplete;
         await this.userRepository.save(userData);
+        this.emailService.sendWelcomeEmail(userData);
         return userData;
     }
 }
