@@ -32,6 +32,14 @@ export class AdminTeachersService {
         
         const query = this.teacherRepository.createQueryBuilder('teacher');
         query.leftJoinAndSelect('teacher.user', 'user');
+        query.leftJoinAndSelect('user.details', 'details');
+        query.leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects', 'teacherSubjects.isDeleted = false');
+        query.leftJoinAndSelect('teacherSubjects.subject', 'subject');
+        query.leftJoinAndSelect('teacher.teacherBookings', 'teacherBookings', 'teacherBookings.isDeleted = false');
+        query.leftJoinAndSelect('teacherBookings.student', 'student');
+        query.leftJoinAndSelect('teacherBookings.availability', 'availability');
+        query.leftJoinAndSelect('details.nationality', 'nationality');
+        query.leftJoinAndSelect('user.educations', 'educations');
         query.where('teacher.isDeleted = :isDeleted', { isDeleted: false });
 
         if (typeof isActive === 'boolean') {
@@ -69,7 +77,24 @@ export class AdminTeachersService {
         };
         return result;
     }
-
+    async getTeacherDetail(id: string): Promise<Teacher> {
+        const query = this.teacherRepository.createQueryBuilder("teacher");
+        query.leftJoinAndSelect('teacher.user', 'user');
+        query.leftJoinAndSelect('user.details', 'details');
+        query.leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects', 'teacherSubjects.isDeleted = false');
+        query.leftJoinAndSelect('teacherSubjects.subject', 'subject');
+        query.leftJoinAndSelect('teacher.teacherBookings', 'teacherBookings', 'teacherBookings.isDeleted = false');
+        query.leftJoinAndSelect('teacherBookings.student', 'student');
+        query.leftJoinAndSelect('teacherBookings.availability', 'availability');
+        query.leftJoinAndSelect('details.nationality', 'nationality');
+        query.leftJoinAndSelect('user.educations', 'educations');
+        query.where('teacher.isDeleted = :isDeleted AND teacher.id = :id', { isDeleted: false, id });
+        const teacher = await query.getOne();
+        if (!teacher) {
+            throw new NotFoundException('Teacher not found');
+        }
+        return teacher;
+    }
     async updateTeacherStatus(id: string, payload: TeacherUpdateStatusDto): Promise<Teacher> {
         const teacher = await this.teacherRepository.findOne({
             where: { id, isDeleted: false },

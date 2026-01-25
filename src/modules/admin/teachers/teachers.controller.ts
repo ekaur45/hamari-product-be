@@ -89,4 +89,15 @@ export class TeachersController {
         const teacher = await this.adminTeachersService.updateTeacherDeletion(id, payload);
         return ApiResponseModel.success(teacher, 'Teacher deletion flag updated successfully');
     }
+
+    @Get(':id/details')
+    @ApiResponse({
+        status: 200,
+        description: 'Teacher detail retrieved successfully',
+        type: ApiResponseModel,
+    })
+    async getTeacherDetail(@Param('id') id: string): Promise<ApiResponseModel<Teacher>> {
+        const teacher = await this.adminTeachersService.getTeacherDetail(id);
+        return ApiResponseModel.success(teacher, 'Teacher detail retrieved successfully');
+    }
 }
