@@ -18,4 +18,10 @@ export class PaginationRequest {
     @IsString()
     @Transform(({ value }) => value?.trim() ?? '')
     search?: string;
+
+    @ApiProperty({ required: false, default: '' })
+    @IsOptional()
+    @IsString()
+    @Transform(({ value }) => value?.trim() ?? '')
+    subjects?: string;
 }

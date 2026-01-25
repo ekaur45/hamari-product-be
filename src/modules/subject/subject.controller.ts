@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Put, Query, Request, SetMetadata, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, Headers, Param, Put, Query, Request, SetMetadata, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
 import { SubjectService } from './subject.service';
@@ -9,7 +9,7 @@ import TeacherSubject from 'src/database/entities/teacher-subject.entity';
 import User from 'src/database/entities/user.entity';
 import { GetSubjectRequest } from './dto/get-subject.request';
 import { RoleGuard } from '../shared/guards/role.guard';
-import { UserRole } from '../shared/enums';
+import { MetadataKeys, UserRole } from '../shared/enums';
 
 
 @ApiTags('Subject')
@@ -48,6 +48,9 @@ export class SubjectController {
     const subjects = await this.subjectService.getAllSubjects(query);
     return ApiResponseModel.success(subjects, 'Subjects retrieved successfully');
   }
+
+  
+
   @Get('search')
   @ApiQuery({ name: 'page', type: 'number', required: false })
   @ApiQuery({ name: 'limit', type: 'number', required: false })
@@ -91,7 +94,24 @@ export class SubjectController {
     return ApiResponseModel.success(teacherSubjects, 'Subject rates updated successfully');
   }
 
-
+  @Delete(':subjectId')
+  @UseGuards(RoleGuard)
+  @SetMetadata(MetadataKeys.UserRoles, [[UserRole.ADMIN]])  
+  @ApiResponse({
+    status: 200,
+    description: 'Subject deleted successfully',
+    type: ApiResponseModel<void>,
+  })
+  async deleteSubject(
+    @Param('subjectId') subjectId: string,
+    @Request() req: { user: User },
+  ): Promise<ApiResponseModel<void>> {
+    if(req.user.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('You are not authorized to delete this subject');
+    }
+    await this.subjectService.deleteSubject(subjectId, req.user);
+    return ApiResponseModel.success(undefined, 'Subject deleted successfully');
+  }
 }
 
 

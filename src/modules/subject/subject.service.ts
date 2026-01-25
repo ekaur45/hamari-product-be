@@ -22,10 +22,11 @@ export class SubjectService {
   ) { }
 
   async getSubjects({ name }: { name: string }): Promise<Subject[]> {
-    return await this.subjectRepository.find({
-      where: { name: Like(`%${name}%`) },
+    const subjects = await this.subjectRepository.find({
+      where: { name: Like(`%${name}%`), isDeleted: false },
       order: { name: 'ASC' },
     });
+    return subjects;
   }
   async getSubjectsWithPagination(
     page: number,
@@ -91,7 +92,7 @@ export class SubjectService {
   async getAllSubjects(request: GetSubjectRequest) {
     const { page, limit, search } = request;
     const query = this.subjectRepository.createQueryBuilder('subject')
-      .innerJoinAndSelect('subject.teacherSubjects', 'teacherSubjects')
+      .leftJoinAndSelect('subject.teacherSubjects', 'teacherSubjects')
       .where('subject.isDeleted = false');
     if (search) {
       query.andWhere('subject.name LIKE :name', { name: `%${search}%` });
@@ -130,6 +131,17 @@ export class SubjectService {
       return amount;
     }
     return (Number(amount) * baseCurrency.exchangeRate) / selectedCurrency.exchangeRate;
+  }
+  async deleteSubject(subjectId: string, user: User): Promise<void> {
+    const subject = await this.subjectRepository.findOne({
+      where: { id: subjectId, isDeleted: false },
+    });
+    if (!subject) {
+      throw new NotFoundException('Subject not found');
+    }
+    subject.isDeleted = true;
+    subject.updatedAt = new Date();
+    await this.subjectRepository.save(subject);
   }
 }
 

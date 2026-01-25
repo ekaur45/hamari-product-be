@@ -6,6 +6,6 @@ export class PublicService {
         private readonly subjectService: SubjectService,
     ) { }
     async getSubjects() {
-        return this.subjectService.getSubjects({ name: '' });
+        return this.subjectService.getSubjects({ name: ''});
     }
 }

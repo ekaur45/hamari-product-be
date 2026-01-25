@@ -130,3 +130,7 @@ export enum OtpType {
   FORGOT_PASSWORD = 'forgot_password',
   VERIFY_EMAIL = 'verify_email',
 }
+
+export enum MetadataKeys {
+  UserRoles = 'user_roles',
+}

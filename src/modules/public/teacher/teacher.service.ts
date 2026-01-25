@@ -1,9 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import TeacherBooking from "src/database/entities/teacher-booking.entity";
 import { Teacher } from "src/database/entities/teacher.entity";
 import { PaginationRequest } from "src/models/common/pagination.model";
 import { BookingStatus } from "src/modules/shared/enums";
-import { Repository } from "typeorm";
+import { ILike, Repository } from "typeorm";
 import { Like } from "typeorm";
 
 @Injectable()
@@ -14,98 +15,65 @@ export class TeacherService {
     ) { }
 
     async getTeachersWithPagination(pagination: PaginationRequest) {
-        const search = pagination.search
-            ? Like(`%${pagination.search}%`)
-            : undefined;
 
-        const [teachers, count] = await this.teacherRepository.findAndCount({
-            where: [
-                {
-                    user: {
-                        firstName: search,
-                    },
-                },
-                {
-                    user: {
-                        lastName: search,
-                    },
-                },
-                {
-                    user: {
-                        details: {
-                            bio: search,
-                        },
-                    },
-                },
-                {
-                    user: {
-                        teacher: {
-                            preferredSubject: search,
-                        },
-                    },
-                },
-                {
-                    user: {
-                        teacher: {
-                            introductionVideoTitle: search,
-                        },
-                    },
-                },
-                {
-                    user: {
-                        teacher: {
-                            introductionVideoDescription: search,
-                        },
-                    },
-                },
-                {
-                    user: {
-                        teacher: {
-                            introductionVideoUrl: search,
-                        },
-                    },
-                },
-                {
-                    user: {
-                        teacher: {
-                            introductionVideoThumbnailUrl: search,
-                        },
-                    },
-                },
-                {
-                    user: {
-                        teacher: {
-                            teacherSubjects: {
-                                subject: {
-                                    name: search,
-                                },
-                            },
-                        },
-                    },
-                },
-                {
-                    user: {
-                        hasCompletedProfile: true,
-                    },
-                },
-            ],
-
-            take: pagination.limit,
-            skip: (pagination.page - 1) * pagination.limit,
-            order: {
-                createdAt: 'DESC',
-            },
-            relations: ['user', 'user.details']
-        });
+        const query = this.teacherRepository
+        .createQueryBuilder('teacher')
+        .distinct(true)
+        .leftJoinAndSelect('teacher.user', 'user')
+        .leftJoinAndSelect('user.details', 'details')
+        .leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects', 'teacherSubjects.isDeleted = false')
+        .leftJoinAndSelect('teacherSubjects.subject', 'subject')
+        .leftJoinAndSelect('teacher.teacherBookings', 'teacherBookings', 'teacherBookings.status = :status AND teacherBookings.isDeleted = false', { status: BookingStatus.CONFIRMED })
+        .addSelect(subQuery => {
+            return subQuery
+              .select('COUNT(DISTINCT tb.studentId)', 'total')
+              .from(TeacherBooking, 'tb')
+              .where('tb.teacherId = teacher.id')
+              .andWhere('tb.status = :status', { status: BookingStatus.CONFIRMED })
+              .andWhere('tb.isDeleted = false');
+          }, 'totalStudents') // Maps to teacher.totalStudents
+        .where('teacher.isDeleted = false')
+        .andWhere('user.hasCompletedProfile = true')
+      
+      if (pagination.search) {
+        query.andWhere(
+          `(
+            LOWER(user.firstName) LIKE LOWER(:search)
+            OR LOWER(user.lastName) LIKE LOWER(:search)
+            OR LOWER(details.bio) LIKE LOWER(:search)
+            OR LOWER(teacher.preferredSubject) LIKE LOWER(:search)
+            OR LOWER(teacher.introductionVideoTitle) LIKE LOWER(:search)
+            OR LOWER(teacher.introductionVideoDescription) LIKE LOWER(:search)
+            OR LOWER(teacher.introductionVideoUrl) LIKE LOWER(:search)
+            OR LOWER(teacher.introductionVideoThumbnailUrl) LIKE LOWER(:search)
+            OR LOWER(subject.name) LIKE LOWER(:search)
+          )`,
+          { search: `%${pagination.search}%` }
+        );
+      }
+      
+      if (pagination.subjects) {
+        const subjects = pagination.subjects.split(',');
+        query.andWhere('subject.name IN (:...subjects)', { subjects });
+      }
+      
+      const [teachers, count] = await query
+        .take(pagination.limit)
+        .skip((pagination.page - 1) * pagination.limit)
+        .orderBy('teacher.createdAt', 'DESC')
+        .getManyAndCount();
         return {
             data: teachers,
             pagination: {
                 page: pagination.page,
                 limit: pagination.limit,
                 total: count,
+                totalPages: Math.ceil(count / pagination.limit),
+                hasNext: pagination.page < Math.ceil(count / pagination.limit),
+                hasPrev: pagination.page > 1,
             },
         }
-    }
+    }        
     async getFeaturedTeachersWithPagination(pagination: PaginationRequest) {
         const [teachers, count] = await this.teacherRepository.findAndCount({
             where: {
@@ -141,7 +109,7 @@ export class TeacherService {
         .leftJoinAndSelect('user.educations', 'educations')
       
         // ================= TEACHER SUBJECTS =================
-        .leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects')
+        .leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects', 'teacherSubjects.isDeleted = false')
         .leftJoinAndSelect('teacherSubjects.subject', 'subject')
       
         // ================= AVAILABILITIES =================

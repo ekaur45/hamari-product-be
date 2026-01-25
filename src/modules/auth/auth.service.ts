@@ -62,13 +62,15 @@ export class AuthService {
       secret: this.config.get('JWT_SECRET')
     });
     const profile = await this.ProfileService.getProfile(user);
-    const otp = await this.otpRepository.save({
-      userId: user.id,
-      otp: generateOtp(),
-      type: OtpType.REGISTER,
-      expiresAt: (new Date(Date.now() + 10 * 60 * 1000)),
-    });
-    this.emailService.sendLoginEmailOtp(user, otp.otp);
+    if(!profile!.isEmailVerified){
+      const otp = await this.otpRepository.save({
+        userId: user.id,
+        otp: generateOtp(),
+        type: OtpType.REGISTER,
+        expiresAt: (new Date(Date.now() + 10 * 60 * 1000)),
+      });
+      this.emailService.sendLoginEmailOtp(user, otp.otp);
+    }
     return {
       ...user,
       ...profile,
@@ -112,13 +114,15 @@ export class AuthService {
         phone: registerUser.phone,
       });
     }
-    const otp = await this.otpRepository.save({
-      userId: user.id,
-      otp: generateOtp(),
-      type: OtpType.REGISTER,
-      expiresAt: (new Date(Date.now() + 10 * 60 * 1000)),
-    });
-    this.emailService.sendRegisterEmailOtp(user, otp.otp);
+    if (!user.isEmailVerified) {
+      const otp = await this.otpRepository.save({
+        userId: user.id,
+        otp: generateOtp(),
+        type: OtpType.REGISTER,
+        expiresAt: (new Date(Date.now() + 10 * 60 * 1000)),
+      });
+      this.emailService.sendRegisterEmailOtp(user, otp.otp);
+    }
     return {
       ...user,
       isProfileComplete: user.isProfileComplete,

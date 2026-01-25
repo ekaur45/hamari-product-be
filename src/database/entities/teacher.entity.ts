@@ -4,6 +4,8 @@ import TeacherSubject from './teacher-subject.entity';
 import Availability from './availablility.entity';
 import ClassEntity from './classes.entity';
 import TeacherBooking from './teacher-booking.entity';
+import { Expose, Type } from 'class-transformer';
+import { BookingStatus } from 'src/modules/shared/enums';
 
 @Entity('teachers')
 export class Teacher {
@@ -45,6 +47,7 @@ export class Teacher {
   specialization: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Type(() => Number)
   hourlyRate: number;
 
   @OneToMany(() => TeacherSubject, (teacherSubject) => teacherSubject.teacher)
@@ -84,5 +87,17 @@ export class Teacher {
   teacherBookings: TeacherBooking[];
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Type(() => Number)
   monthlyRate: number | null;
+
+  @Expose({ name: 'totalStudents' })
+  get totalStudents(): number {
+    if (!this.teacherBookings) return 0;
+    const confirmedBookings = this.teacherBookings.filter(
+      (b) => b.status === BookingStatus.CONFIRMED && !b.isDeleted
+    );
+    // Count distinct students
+    const studentIds = confirmedBookings.map((b) => b.studentId);
+    return Array.from(new Set(studentIds)).length;
+  }
 }

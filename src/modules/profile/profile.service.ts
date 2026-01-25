@@ -43,7 +43,7 @@ export class ProfileService {
     async getProfile(user: Omit<User, 'password'>) {
         const query = this.userRepository
             .createQueryBuilder('user')
-            .leftJoinAndSelect('user.details', 'details', 'user.id = details.userId')
+            .leftJoinAndSelect('user.details', 'details')
             .leftJoinAndSelect('details.nationality', 'nationality')
             .leftJoinAndSelect('user.educations', 'educations');
 
@@ -366,7 +366,9 @@ export class ProfileService {
         }
         userData.hasCompletedProfile = userData.isProfileComplete;
         await this.userRepository.save(userData);
-        this.emailService.sendWelcomeEmail(userData);
+        if(userData.hasCompletedProfile) {
+            this.emailService.sendWelcomeEmail(userData);
+        }
         return userData;
     }
 }

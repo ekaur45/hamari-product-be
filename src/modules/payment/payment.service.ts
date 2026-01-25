@@ -82,7 +82,7 @@ export class PaymentService {
       subjectId: createPaymentIntentDto.subjectId,
       teacherSubjectId: teacherSubject.id.toString(),
       availabilityId: createPaymentIntentDto.slotId,
-      totalAmount: await this.convertToBaseCurrency(teacherSubject.hourlyRate || 0, currency), // convert to base currency
+      totalAmount: await this.convertToBaseCurrency(teacherSubject.hourlyRate || 0, currency), // convert from base currency
     });
     if (teacherBooking) {
       const paymentIntent = await this.stripe.checkout.sessions.create({
@@ -91,7 +91,7 @@ export class PaymentService {
           {
             price_data: {
               currency: "usd",
-              unit_amount: Math.round((teacherBooking.totalAmount || 0) * 100),
+              unit_amount: Math.round((teacherSubject.hourlyRate || 0) * 100),
               product_data: {
                 name: 'Teacher Booking',
                 description: 'Payment for teacher booking',

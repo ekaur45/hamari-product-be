@@ -37,7 +37,7 @@ export default class PaymentService {
         if (!teacherBooking) {
             throw new BadRequestException('Teacher booking not found');
         }
-        teacherBooking.status = BookingStatus.COMPLETED;
+        teacherBooking.status = BookingStatus.CONFIRMED;
         teacherBooking.updatedAt = new Date();
         await this.teacherBookingRepository.save(teacherBooking);
     }
