@@ -63,7 +63,7 @@ export class StudentService {
       where: {
         studentId: student.id,
         isDeleted: false,
-        status: BookingStatus.COMPLETED,
+        status: BookingStatus.CONFIRMED,
       },
       relations: ['teacher', 'teacherSubject', 'availability', 'teacherSubject.subject', 'teacher.user'],
     });
@@ -71,7 +71,7 @@ export class StudentService {
       where: {
         studentId: student.id,
         isDeleted: false,
-        status: BookingStatus.COMPLETED,
+        status: BookingStatus.CONFIRMED,
       },
       relations: ['class', 'class.teacher', 'class.teacher.user', 'class.subject', 'student', 'student.user', 'class.classBookings'],
     });
@@ -374,7 +374,7 @@ export class StudentService {
       .leftJoinAndSelect('teacherSubject.subject', 'subject')
       .leftJoinAndSelect('booking.availability', 'availability')
       .where('booking.studentId = :studentId', { studentId: student.id })
-      .andWhere('booking.isDeleted = :isDeleted', { isDeleted: false });
+      .andWhere('booking.isDeleted = :isDeleted AND booking.status in (:...statuses)', { isDeleted: false, statuses: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED,BookingStatus.CANCELLED] });
 
     if (filters.status) {
       query.andWhere('booking.status = :status', { status: filters.status });

@@ -88,6 +88,7 @@ export class AdminTeachersService {
         query.leftJoinAndSelect('teacherBookings.availability', 'availability');
         query.leftJoinAndSelect('details.nationality', 'nationality');
         query.leftJoinAndSelect('user.educations', 'educations');
+        query.leftJoinAndSelect('teacher.availabilities', 'availabilities', 'availabilities.isDeleted = false');
         query.where('teacher.isDeleted = :isDeleted AND teacher.id = :id', { isDeleted: false, id });
         const teacher = await query.getOne();
         if (!teacher) {

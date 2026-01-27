@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Teacher } from 'src/database/entities/teacher.entity';
 import { Pagination } from '../shared/models/api-response.model';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import UpdateTeacherRatesDto from './dto/update-rates.dto';
 import User from 'src/database/entities/user.entity';
 import TeacherBooking from 'src/database/entities/teacher-booking.entity';
@@ -16,7 +16,7 @@ import StudentPerformanceDto from './dto/student-performance.dto';
 import Assignment from 'src/database/entities/assignment.entity';
 import AssignmentSubmission from 'src/database/entities/assignment-submission.entity';
 import Review from 'src/database/entities/review.entity';
-import { UserRole } from 'src/modules/shared/enums';
+import { BookingStatus, UserRole } from 'src/modules/shared/enums';
 import Currency from 'src/database/entities/currency.entity';
 @Injectable()
 export class TeacherService {
@@ -102,7 +102,7 @@ export class TeacherService {
   }
   async getTeacherBookings(user: User): Promise<TeacherBooking[]> {
     const teacher = await this.teacherRepository.findOne({
-      where: { userId: user.id, isDeleted: false },
+      where: { userId: user.id, isDeleted: false,teacherBookings: { isDeleted: false,status: In([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]) } },
       relations: ['teacherBookings', 'teacherBookings.teacher', 'teacherBookings.student', 'teacherBookings.student.user', 'teacherBookings.teacherSubject', 'teacherBookings.availability', 'teacherBookings.teacherSubject.subject'],
     });
     if (!teacher) {

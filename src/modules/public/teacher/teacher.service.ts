@@ -33,7 +33,7 @@ export class TeacherService {
               .andWhere('tb.isDeleted = false');
           }, 'totalStudents') // Maps to teacher.totalStudents
         .where('teacher.isDeleted = false')
-        .andWhere('user.hasCompletedProfile = true')
+        .andWhere('user.hasCompletedProfile = true AND teacher.isActive = true')
       
       if (pagination.search) {
         query.andWhere(

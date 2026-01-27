@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query, SetMetadata, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Patch, Query, SetMetadata, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AdminStudentsService } from './admin-students.service';
 import { ApiResponseModel } from 'src/modules/shared/models/api-response.model';
 import { ApiBearerAuth, ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
@@ -68,5 +68,21 @@ export class StudentsController {
     ): Promise<ApiResponseModel<Student>> {
         const student = await this.adminStudentsService.updateStudentDeletion(id, payload);
         return ApiResponseModel.success(student, 'Student deletion flag updated successfully');
+    }
+
+    @Get(':id/details')
+    @ApiResponse({
+        status: 200,
+        description: 'Student deletion flag updated successfully',
+        type: ApiResponseModel,
+    })
+    async getStudentDetails(
+        @Param('id') studentId:string
+    ): Promise<ApiResponseModel<Student>> {
+        const student = await this.adminStudentsService.getStudentById(studentId);
+        if (!student) {
+            throw new NotFoundException('Student not found');
+        }
+        return ApiResponseModel.success(student, 'Student details retrieved successfully');
     }
 }

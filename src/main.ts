@@ -107,8 +107,9 @@ async function bootstrap() {
     ? `http://${address}:${port}`
     : `https://${address}:${port}`;
 
-  logger.log(`Application is running on: ${serverUrl}`);
-  logger.log(`Swagger documentation available at: ${serverUrl}/api-docs`);
+  console.log(`Application is running on: ${serverUrl}`);
+  console.log(`Swagger documentation available at: ${serverUrl}/api-docs`);
+
 
 }
 

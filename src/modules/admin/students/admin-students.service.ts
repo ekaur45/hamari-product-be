@@ -6,6 +6,7 @@ import StudentListDto from './dto/student-list.dto';
 import User from 'src/database/entities/user.entity';
 import StudentUpdateStatusDto from './dto/student-update-status.dto';
 import StudentUpdateDeletionDto from './dto/student-update-deletion.dto';
+import { BookingStatus } from 'src/modules/shared/enums';
 
 @Injectable()
 export class AdminStudentsService {
@@ -40,7 +41,7 @@ export class AdminStudentsService {
         query.leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects', 'teacherSubjects.isDeleted = false');
         query.leftJoinAndSelect('teacherSubjects.subject', 'subject');
         query.leftJoinAndSelect('teacher.availabilities', 'availabilities', 'availabilities.isDeleted = false');
-        
+
         query.where('student.isDeleted = :isDeleted', { isDeleted: false });
 
         if (typeof isActive === 'boolean') {
@@ -73,7 +74,28 @@ export class AdminStudentsService {
         };
         return result;
     }
+    async getStudentById(studentId:string){
+        const query = this.studentRepository.createQueryBuilder('student');
+        query.leftJoinAndSelect('student.user', 'user');
+        query.leftJoinAndSelect('user.details', 'details');
+        query.leftJoinAndSelect('details.nationality', 'nationality');
+        query.leftJoinAndSelect('user.educations', 'educations');
+        query.leftJoinAndSelect('student.parent', 'parent');
+        query.leftJoinAndSelect('parent.user', 'parentUser');
+        query.leftJoinAndSelect('parentUser.details', 'parentDetails');
+        query.leftJoinAndSelect('parentDetails.nationality', 'parentNationality');
+        query.leftJoinAndSelect('student.teacherBookings', 'teacherBookings', 'teacherBookings.isDeleted = false and teacherBookings.status in (:...statuses)', { statuses: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] });
+        query.leftJoinAndSelect('teacherBookings.teacher', 'teacher');
+        query.leftJoinAndSelect('teacher.user', 'teacherUser');
+        query.leftJoinAndSelect('teacherUser.details', 'teacherDetails');
+        query.leftJoinAndSelect('teacherDetails.nationality', 'teacherNationality');
+        query.leftJoinAndSelect('teacher.teacherSubjects', 'teacherSubjects', 'teacherSubjects.isDeleted = false');
+        query.leftJoinAndSelect('teacherSubjects.subject', 'subject');
+        query.leftJoinAndSelect('teacher.availabilities', 'availabilities', 'availabilities.isDeleted = false');
 
+        query.where('student.isDeleted = :isDeleted AND student.id = :studentId', { isDeleted: false,studentId });
+        return query.getOne();
+    }
     async updateStudentStatus(id: string, payload: StudentUpdateStatusDto): Promise<Student> {
         const student = await this.studentRepository.findOne({
             where: { id, isDeleted: false },
