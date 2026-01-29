@@ -134,3 +134,11 @@ export enum OtpType {
 export enum MetadataKeys {
   UserRoles = 'user_roles',
 }
+
+export enum NotificationType {
+  CHAT = 'chat',
+  MESSAGE = 'message',
+  BOOKING = 'booking',
+  PAYMENT = 'payment',
+  OTHER = 'other',
+}

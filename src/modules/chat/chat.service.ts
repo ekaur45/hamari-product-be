@@ -10,6 +10,8 @@ import { LoggerService } from "../logger/logger.service";
 import { SendMessageDto } from "./dto/send-message.dto";
 import { ChatGateway } from "../websockets/chat-gateway/chat.gateway";
 import ChatResource from "src/database/entities/chat-resource.entity";
+import { NotificationService } from "../shared/notification/notification.service";
+import { NotificationType, UserRole } from "../shared/enums";
 
 @Injectable()
 export class ChatService {
@@ -27,6 +29,10 @@ export class ChatService {
     private readonly chatGateway: ChatGateway,
     @InjectRepository(ChatResource)
     private readonly chatResourceRepository: Repository<ChatResource>,
+
+    private readonly notificationService: NotificationService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {
 
   }
@@ -61,6 +67,14 @@ export class ChatService {
           name: `${user.firstName} ${user.lastName} and ${receiverUser.firstName} ${receiverUser.lastName}`,
         }),
       );
+      await this.notificationService.createNotification(receiverUser, {
+        type: NotificationType.CHAT,
+        title: 'New Chat',
+        message: 'You have a new chat with ' + user.firstName + ' ' + user.lastName,
+        redirectPath: receiverUser.role === UserRole.TEACHER ? '/teacher/chat/' + conversation.id : '/teacher/chat/' + conversation.id,
+        redirectParams: { conversationId: conversation.id },
+        user: receiverUser,
+      });
     }
     const chat = this.chatRepository.create({
       conversation,
@@ -75,21 +89,6 @@ export class ChatService {
   }
 
   async getChatUsers(user: User) {
-    // const conversations = await this.conversationRepository
-    // .createQueryBuilder('conversations')
-    // .innerJoin('conversations.participants', 'me', 'me.id = :userId', {
-    //   userId: user.id,
-    // })
-    // .leftJoinAndSelect('conversations.participants', 'participant')
-    // //.leftJoinAndSelect('participant.user', 'user')
-    // .leftJoinAndSelect('participant.details', 'details')
-    // .leftJoin('conversations.chats', 'chat')
-    // .addOrderBy(
-    //   `(SELECT MAX(chat.createdAt) FROM chats chat WHERE chat.conversationId = conversations.id)`,
-    //   'DESC',
-    // )
-    // .getMany();
-
     const conversations = await this.conversationRepository
     .createQueryBuilder('conversations')
     .innerJoin('conversations.participants', 'me', 'me.id = :userId', { userId: user.id })
@@ -141,10 +140,15 @@ export class ChatService {
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
+    const receiver = await this.userRepository.findOneBy({ id: receiverId });
+    if (!receiver) {
+      throw new NotFoundException('Receiver not found');
+    }
     const chat = await this.chatRepository.save(this.chatRepository.create({
       conversation,
       sender: user,
-      receiverId: receiverId,
+      receiver: receiver,
+      receiverId: receiver.id,
       message
     }));
     if(sendMessageDto.resources && sendMessageDto.resources.length > 0) {
@@ -154,6 +158,14 @@ export class ChatService {
       chat.resources = [...(chat.resources || []), ...newResources];
       await this.chatResourceRepository.save(newResources);
     }
+    this.notificationService.createNotification(chat.receiver, {
+      type: NotificationType.CHAT,
+      title: 'New message',
+      message: 'You have a new message from <span class="font-bold">' + chat.sender.firstName + ' ' + chat.sender.lastName + '</span>',
+      redirectPath: chat.receiver.role === UserRole.TEACHER ? '/teacher/chat/' + chat.conversation.id : '/teacher/chat/' + chat.conversation.id,
+      redirectParams: { conversationId: chat.conversation.id },
+      user: chat.receiver,
+    });
     this.chatGateway.sendMessage(chat.conversation.id, { message: chat.message! ?? '' });
     return chat;
   }

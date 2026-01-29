@@ -16,6 +16,7 @@ import { Teacher } from './teacher.entity';
 import { Parent } from './parent.entity';
 import { Expose } from 'class-transformer';
 import Otp from './otp.entity';
+import Notification from './notification.entity';
 
 
 @Entity('users')
@@ -78,6 +79,9 @@ export default class User {
 
   @OneToMany(() => Otp, (otp) => otp.user,{cascade: true})
   otps?: Otp[] | null;
+
+  @OneToMany(() => Notification, (notification) => notification.user,{cascade: true})
+  notifications?: Notification[] | null;
 
   @Column({ type: 'boolean', default: false })
   hasCompletedProfile: boolean;

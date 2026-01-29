@@ -31,6 +31,8 @@ import Otp from 'src/database/entities/otp.entity';
 import Chat from 'src/database/entities/chat.entity';
 import Conversation from 'src/database/entities/conversation.entity';
 import ChatResource from 'src/database/entities/chat-resource.entity';
+import Notification from 'src/database/entities/notification.entity';
+import { NotificationModule } from './notification/notification.module';
 
 const ENTITIES = [
   User,
@@ -60,12 +62,13 @@ const ENTITIES = [
   Otp,
   Chat,
   Conversation,
-  ChatResource
+  ChatResource,
+  Notification
 ];
 
 @Module({
-  imports: [TypeOrmModule.forFeature([...ENTITIES]), EmailModule],
+  imports: [TypeOrmModule.forFeature([...ENTITIES]), EmailModule, NotificationModule],
   providers: [AdminActionLoggerInterceptor, CurrencyService],
-  exports: [TypeOrmModule.forFeature([...ENTITIES]), AdminActionLoggerInterceptor, CurrencyService, EmailModule],
+  exports: [TypeOrmModule.forFeature([...ENTITIES]), AdminActionLoggerInterceptor, CurrencyService, EmailModule, NotificationModule],
 })
 export default class SharedModule { }
