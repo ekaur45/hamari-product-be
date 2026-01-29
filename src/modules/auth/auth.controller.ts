@@ -65,11 +65,23 @@ export class AuthController {
     type: ApiResponseModel,
   })
   @Post('register')
-  async register(@Body() user: RegisterDto): Promise<ApiResponseModel<User>> {
+  async register( @Res({ passthrough: true }) res: express.Response, @Body() user: RegisterDto): Promise<ApiResponseModel<User>> {
     if (user.role === UserRole.ADMIN) {
       throw new BadRequestException('Admin registration is not allowed.');
     }
     const newUser = await this.authService.register(user);
+    const cookiesOptions: CookieOptions = {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 1000 * 60 * 60 * 24 * 1,
+    }
+    if (process.env.NODE_ENV === 'production') {
+      cookiesOptions.secure = true;
+      cookiesOptions.domain = '.taleemiyat.com';
+    }
+    res.cookie('taleemiyat_token', newUser.access_token, cookiesOptions);
     return ApiResponseModel.success({...newUser, isProfileComplete: newUser.isProfileComplete}, 'Registration successful', '/auth/register');
   }
 

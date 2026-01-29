@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { FindOptionsWhere, Repository } from "typeorm";
+import { FindOptionsWhere, In, Repository } from "typeorm";
 import Notification from "src/database/entities/notification.entity";
 import User from "src/database/entities/user.entity";
-import { NotificationType } from "../enums";
+import { NotificationType, UserRole } from "../enums";
 import { Pagination } from "../models/api-response.model";
 
 @Injectable()
@@ -11,9 +11,23 @@ export class NotificationService {
     constructor(
         @InjectRepository(Notification)
         private readonly notificationRepository: Repository<Notification>,
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>,
     ) {}
 
     async createNotification(user: User, notification: Partial<Notification>): Promise<Notification> {
+        if([
+            NotificationType.NEW_REGISTER,
+            NotificationType.BOOKING_CONFIRMED,
+            NotificationType.PAYMENT_CONFIRMED,
+            NotificationType.PAYMENT_FAILED,
+            NotificationType.PAYMENT_REFUNDED,
+            NotificationType.PAYMENT_PENDING,
+            NotificationType.PAYMENT_PARTIAL_REFUNDED,
+            NotificationType.PAYMENT_PARTIAL_REFUNDED,
+        ].includes(notification.type as NotificationType)) {
+            this.createNotificationForAdmin(notification);
+        }
         const newNotification = this.notificationRepository.create({
             type: notification.type || NotificationType.OTHER,
             title: notification.title || 'Notification',
@@ -51,5 +65,30 @@ export class NotificationService {
     }
     async markAsRead(userId: string, id: string): Promise<void> {
         await this.notificationRepository.update({ id, user: { id: userId } }, { isRead: true });
+    }
+
+
+    async createNotificationForAdmin(notification: Partial<Notification>): Promise<void> {
+        const admins = await this.userRepository.find({
+            where: {
+                role: In([UserRole.ADMIN]),
+            },
+        });
+        if(admins.length > 0) {
+            if(!notification.redirectPath?.includes('/admin')) {
+                notification.redirectPath = '';
+            }
+            admins.forEach(async admin => {
+                const newNotification = this.notificationRepository.create({
+                    type: notification.type || NotificationType.OTHER,
+                    title: notification.title || 'Notification',
+                    message: notification.message || 'You have a new notification',
+                    redirectPath: notification.redirectPath || '',
+                    redirectParams: notification.redirectParams || {},
+                    user: admin,
+                });
+                await this.notificationRepository.save(newNotification);
+            });
+        }
     }
 }

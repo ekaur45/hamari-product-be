@@ -141,5 +141,12 @@ export enum NotificationType {
   BOOKING = 'booking',
   PAYMENT = 'payment',
   BOOKING_CONFIRMED = 'booking_confirmed',
+  PAYMENT_CONFIRMED = 'payment_confirmed',
+  PAYMENT_FAILED = 'payment_failed',
+  PAYMENT_REFUNDED = 'payment_refunded',
+  PAYMENT_PENDING = 'payment_pending',
+  PAYMENT_PARTIAL_REFUNDED = 'payment_partial_refunded',
+  NEW_REGISTER = 'new_register',
+  PROFILE_COMPLETED = 'profile_completed',
   OTHER = 'other',
 }

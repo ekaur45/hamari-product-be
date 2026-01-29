@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import User from 'src/database/entities/user.entity';
 import { In, Repository } from 'typeorm';
 import UserDetail from 'src/database/entities/user-details.entity';
-import { UserRole } from '../shared/enums';
+import { NotificationType, UserRole } from '../shared/enums';
 import UpdateProfileDto, { AddAvailabilityDto, UpdateProfessionalInfoDto, UpdateProfileBioDto, UpdateUserEducationDto, UpdateUserSubjectsDto } from './dto/update-profile.dto';
 import { Teacher } from 'src/database/entities/teacher.entity';
 import UserEducation from 'src/database/entities/user-education.entity';
@@ -11,6 +11,7 @@ import TeacherSubject from 'src/database/entities/teacher-subject.entity';
 import Subject from 'src/database/entities/subject.entity';
 import Availability, { AvailabilityDay } from 'src/database/entities/availablility.entity';
 import { EmailService } from '../shared/email/email.service';
+import { NotificationService } from '../shared/notification/notification.service';
 
 const logger = new Logger('ProfileService');
 
@@ -37,6 +38,7 @@ export class ProfileService {
         @InjectRepository(UserEducation)
         private readonly userEducationRepository: Repository<UserEducation>,
         private readonly emailService: EmailService,
+        private readonly notificationService: NotificationService,
     ) {
     }
 
@@ -368,6 +370,12 @@ export class ProfileService {
         await this.userRepository.save(userData);
         if(userData.hasCompletedProfile) {
             this.emailService.sendWelcomeEmail(userData);
+            this.notificationService.createNotificationForAdmin({
+                type: NotificationType.PROFILE_COMPLETED,
+                title: 'Profile completed',
+                message: `<span class="font-bold">${userData.firstName} ${userData.lastName}</span> has completed their profile as a <span class="font-bold text-primary">${userData.role}</span> at <span class="font-bold text-gray-500">${new Date().toLocaleString()}</span>`,
+                redirectPath: '/admin/users/list',
+            });
         }
         return userData;
     }

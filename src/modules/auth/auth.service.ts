@@ -7,7 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import RegisterDto from './dto/register.dto';
 import { ConfigService } from '@nestjs/config';
-import { OtpType, UserRole } from '../shared/enums';
+import { NotificationType, OtpType, UserRole } from '../shared/enums';
 import { Teacher } from 'src/database/entities/teacher.entity';
 import { Student } from 'src/database/entities/student.entity';
 import { Parent } from 'src/database/entities/parent.entity';
@@ -17,6 +17,7 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { generateOtp } from 'src/utils/misc.utils';
 import Otp from 'src/database/entities/otp.entity';
 import { EmailService } from '../shared/email/email.service';
+import { NotificationService } from '../shared/notification/notification.service';
 @Injectable()
 export class AuthService {
   constructor(
@@ -39,6 +40,8 @@ export class AuthService {
     @InjectRepository(Otp)
     private readonly otpRepository: Repository<Otp>,
     private readonly emailService: EmailService,
+
+    private notificationService: NotificationService,
   ) { }
   async login(login: LoginDto): Promise<LoginResponseDto> {
     const user = await this.userRepository.findOne({
@@ -198,6 +201,15 @@ export class AuthService {
     };
     const access_token = this.jwtService.sign(tokenPayload, {
       secret: this.config.get('JWT_SECRET')
+    });
+    this.notificationService.createNotificationForAdmin({
+      type: NotificationType.NEW_REGISTER,
+      title: 'New User Registered',
+      message: `<span class="font-bold">${_user!.firstName} ${_user!.lastName}</span> has registered as a <span class="font-bold text-primary">${_user!.role}</span>
+      at <span class="font-bold text-gray-500">${new Date().toLocaleString()}</span>`,
+      redirectPath: '/admin/users/list',
+      redirectParams: { userId: _user!.id },
+      user: _user!,
     });
     return {
       ..._user,

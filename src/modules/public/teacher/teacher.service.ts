@@ -81,10 +81,10 @@ export class TeacherService {
                     hasCompletedProfile: true,
                 },
             },
-            take: 3,
+            take: 5,
             skip: 0,
             order: {
-                createdAt: 'ASC',
+                createdAt: 'DESC',
             },
             relations: ['user', 'user.details']
         })
