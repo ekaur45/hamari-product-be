@@ -9,6 +9,7 @@ import Conversation from "src/database/entities/conversation.entity";
 import { LoggerService } from "../logger/logger.service";
 import { SendMessageDto } from "./dto/send-message.dto";
 import { ChatGateway } from "../websockets/chat-gateway/chat.gateway";
+import ChatResource from "src/database/entities/chat-resource.entity";
 
 @Injectable()
 export class ChatService {
@@ -24,6 +25,8 @@ export class ChatService {
     private readonly teacherRepository: Repository<Teacher>,
     private readonly logger: LoggerService,
     private readonly chatGateway: ChatGateway,
+    @InjectRepository(ChatResource)
+    private readonly chatResourceRepository: Repository<ChatResource>,
   ) {
 
   }
@@ -99,11 +102,10 @@ export class ChatService {
       `lastChat.id = (
         SELECT c.id 
         FROM chats c 
-        WHERE c.conversationId = conversations.id
-        and c.senderId != :senderId
+        WHERE c.conversationId = conversations.id        
         ORDER BY c.createdAt DESC
         LIMIT 1
-      )`, { senderId: user.id })
+      )`)
     .orderBy('lastChat.createdAt', 'DESC')
     .getMany();
     this.logger.log(JSON.stringify(conversations), 'conversations - getChatUsers');
@@ -113,6 +115,7 @@ export class ChatService {
   async getChats(page: number, limit: number, sender: User,conversationId: string) {
     const [chats, total] = await this.chatRepository
     .createQueryBuilder('chats')
+    .leftJoinAndSelect('chats.resources', 'resources')
     .innerJoinAndSelect('chats.sender', 'sender')
     .innerJoinAndSelect('chats.receiver', 'receiver')
     .innerJoinAndSelect('chats.conversation', 'conversation', 'conversation.id = :conversationId', { conversationId })
@@ -144,6 +147,13 @@ export class ChatService {
       receiverId: receiverId,
       message
     }));
+    if(sendMessageDto.resources && sendMessageDto.resources.length > 0) {
+      const newResources = sendMessageDto.resources.map(resource =>
+        this.chatResourceRepository.create({ ...resource,chat, })
+      );
+      chat.resources = [...(chat.resources || []), ...newResources];
+      await this.chatResourceRepository.save(newResources);
+    }
     this.chatGateway.sendMessage(chat.conversation.id, { message: chat.message! ?? '' });
     return chat;
   }

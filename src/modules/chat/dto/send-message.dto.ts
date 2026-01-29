@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsArray, IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
+import ChatResource from "src/database/entities/chat-resource.entity";
 
 export class SendMessageDto {
     @ApiProperty({ description: 'Conversation ID', example: '123e4567-e89b-12d3-a456-426614174000' })
@@ -14,10 +15,20 @@ export class SendMessageDto {
 
     @IsOptional()
     @IsArray({ message: 'Resources must be an array' })    
-    resources: string[];
+    resources: Partial<ChatResourceDto>[];
 
     @ApiProperty({ description: 'Receiver ID', example: '123e4567-e89b-12d3-a456-426614174000' })
     @IsNotEmpty({ message: 'Receiver ID is required' })
     @IsUUID(4, { message: 'Receiver ID must be a valid UUID' })
     receiverId: string;
+}
+
+export default class ChatResourceDto {    
+    id: string;    
+    chatId: string;
+    chat: any;
+    mimeType: string;
+    fileName: string;
+    filePath: string;
+    fileSize: string;
 }
