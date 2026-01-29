@@ -1,8 +1,19 @@
 import { Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from 'socket.io';
 @WebSocketGateway({
-    cors: { origin: '*' },
+    cors: { origin: (origin,callback)=>{
+        const configService = new ConfigService();
+        const allowedOrigins = configService.get<string>('ALLOWED_ORIGINS')?.split(',') || ['http://localhost:4200', 'http://localhost:3000'];
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    } , credentials: true },
+    transports: ['websocket', 'polling'],
+    cookie: true,    
     namespace: '/chat',
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { FindOptionsWhere, Repository } from "typeorm";
 import Notification from "src/database/entities/notification.entity";
 import User from "src/database/entities/user.entity";
 import { NotificationType } from "../enums";
@@ -26,8 +26,12 @@ export class NotificationService {
     }
 
 
-    async getNotifications(userId: string, page: number, limit: number): Promise< { data: Notification[], total: number, pagination: Pagination }> {
-        const [notifications, total] = await this.notificationRepository.findAndCount({ where: { user: { id: userId } }, order: { createdAt: 'DESC' } });
+    async getNotifications(userId: string, page: number, limit: number, type?: NotificationType): Promise< { data: Notification[], total: number, pagination: Pagination }> {
+        const where: FindOptionsWhere<Notification> = { user: { id: userId } };
+        if (type) {
+            where.type = type;
+        }
+        const [notifications, total] = await this.notificationRepository.findAndCount({ where, order: { createdAt: 'DESC' } });
         return {
             data: notifications,
             total,

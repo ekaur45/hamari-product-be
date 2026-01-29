@@ -5,15 +5,11 @@ import { json, urlencoded } from 'express';
 import { GlobalExceptionFilter } from './filters/global-exception/global-exception.filter';
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
-import multer from 'multer';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { readFileSync } from 'fs';
 import { AddressInfo } from 'net';
 import { ConfigService } from '@nestjs/config';
 import { LoggerService } from './modules/logger/logger.service';
-import { AppDataSource } from './database/data-source';
-import seedNationalities from './database/seeds/nationality.seed';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import { PUBLIC_API_PAYMENT_BASE } from './utils/api.constants';
@@ -50,7 +46,7 @@ async function bootstrap() {
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders:
-      'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Stripe-Signature,X-Currency',
+      'Origin, X-Requested-With, Content-Type, Accept, Cookie, Authorization, X-Stripe-Signature,X-Currency',
   });
 
   // Enable global validation
