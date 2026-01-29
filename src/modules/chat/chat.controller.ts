@@ -4,6 +4,7 @@ import { JwtAuthGuard } from "../shared/guards/jwt-auth.guard";
 import { ChatService } from "./chat.service";
 import { InitiateChatDto } from "./dto/iniate-chat.dto";
 import User from "src/database/entities/user.entity";
+import { SendMessageDto } from "./dto/send-message.dto";
 
 @Controller('chats')
 @UseGuards(JwtAuthGuard)
@@ -25,7 +26,11 @@ export class ChatController {
   }
 
   @Get()
-  async getChats(@Query('page') page: number = 1, @Query('limit') limit: number = 10, @Query('receiverId') receiverId: string, @Request() req: { user: User }) {
-    return this.chatService.getChats(page, limit, req.user, receiverId);
+  async getChats(@Query('page') page: number = 1, @Query('limit') limit: number = 10, @Query('conversationId') conversationId: string, @Request() req: { user: User }) {
+    return this.chatService.getChats(page, limit, req.user, conversationId);
+  }
+  @Post('send')
+  async sendMessage(@Body() sendMessageDto: SendMessageDto, @Request() req: { user: User }) {
+    return this.chatService.sendMessage(sendMessageDto, req.user);
   }
 }

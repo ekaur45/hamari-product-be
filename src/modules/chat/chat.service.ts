@@ -1,68 +1,124 @@
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, SelectQueryBuilder } from "typeorm";
 import Chat from "src/database/entities/chat.entity";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import User from "src/database/entities/user.entity";
 import { InitiateChatDto } from "./dto/iniate-chat.dto";
 import { Teacher } from "src/database/entities/teacher.entity";
+import Conversation from "src/database/entities/conversation.entity";
+import { LoggerService } from "../logger/logger.service";
+import { SendMessageDto } from "./dto/send-message.dto";
+import { ChatGateway } from "../websockets/chat-gateway/chat.gateway";
 
 @Injectable()
 export class ChatService {
   constructor(
+
+
+    @InjectRepository(Conversation)
+    private readonly conversationRepository: Repository<Conversation>,
     @InjectRepository(Chat)
     private readonly chatRepository: Repository<Chat>,
 
     @InjectRepository(Teacher)
     private readonly teacherRepository: Repository<Teacher>,
+    private readonly logger: LoggerService,
+    private readonly chatGateway: ChatGateway,
   ) {
 
   }
 
   async initiateChat(initiateChatDto: InitiateChatDto, user: User) {
     const { receiverId, message } = initiateChatDto;
-    const receiver = await this.teacherRepository.findOne({ where: { id: receiverId } });
+  
+    const receiver = await this.teacherRepository.findOne({
+      where: { id: receiverId },
+      relations: ['user'],
+    });
+  
     if (!receiver) {
       throw new NotFoundException('Receiver not found or is not a teacher');
     }
+  
+    const receiverUser = receiver.user;
+    let conversation = await this.conversationRepository
+      .createQueryBuilder('conversations')
+      .innerJoin('conversations.participants', 'p')
+      .where('p.id IN (:...ids)', {
+        ids: [user.id, receiverUser.id],
+      })
+      .groupBy('conversations.id')
+      .having('COUNT(DISTINCT p.id) = 2')
+      .getOne();
+  
+    if (!conversation) {
+      conversation = await this.conversationRepository.save(
+        this.conversationRepository.create({
+          participants: [user, receiverUser],
+          name: `${user.firstName} ${user.lastName} and ${receiverUser.firstName} ${receiverUser.lastName}`,
+        }),
+      );
+    }
     const chat = this.chatRepository.create({
-      senderId: user.id,
-      receiverId: receiver.userId,
+      conversation,
+      sender: user,
+      receiver: receiverUser,
       message,
     });
-    return this.chatRepository.save(chat);
+  
+    await this.chatRepository.save(chat);
+  
+    return conversation;
   }
 
   async getChatUsers(user: User) {
-    const chats = await this.chatRepository.find({
-      where: [
-        { senderId: user.id },
-        { receiverId: user.id },
-      ],
-      relations: ['sender', 'sender.details', 'receiver', 'receiver.details'],
-      order: { createdAt: 'DESC' },
-    });
-  
-    const map = new Map<string, any>();
-  
-    for (const chat of chats) {
-      const otherUser =
-        chat.senderId === user.id ? chat.receiver : chat.sender;
-  
-      if (!map.has(otherUser.id)) {
-        map.set(otherUser.id, {
-          user: otherUser,
-          lastMessage: chat.message,
-          createdAt: chat.createdAt,
-          isRead: chat.isRead,
-        });
-      }
-    }
-  
-    return Array.from(map.values());
+    // const conversations = await this.conversationRepository
+    // .createQueryBuilder('conversations')
+    // .innerJoin('conversations.participants', 'me', 'me.id = :userId', {
+    //   userId: user.id,
+    // })
+    // .leftJoinAndSelect('conversations.participants', 'participant')
+    // //.leftJoinAndSelect('participant.user', 'user')
+    // .leftJoinAndSelect('participant.details', 'details')
+    // .leftJoin('conversations.chats', 'chat')
+    // .addOrderBy(
+    //   `(SELECT MAX(chat.createdAt) FROM chats chat WHERE chat.conversationId = conversations.id)`,
+    //   'DESC',
+    // )
+    // .getMany();
+
+    const conversations = await this.conversationRepository
+    .createQueryBuilder('conversations')
+    .innerJoin('conversations.participants', 'me', 'me.id = :userId', { userId: user.id })
+    .leftJoinAndSelect('conversations.participants', 'participant')
+    .leftJoinAndSelect('participant.details', 'details')
+    .leftJoinAndMapOne(
+      "conversations.lastMessageChat",
+      "conversations.chats",
+      "lastChat",
+      `lastChat.id = (
+        SELECT c.id 
+        FROM chats c 
+        WHERE c.conversationId = conversations.id
+        and c.senderId != :senderId
+        ORDER BY c.createdAt DESC
+        LIMIT 1
+      )`, { senderId: user.id })
+    .orderBy('lastChat.createdAt', 'DESC')
+    .getMany();
+    this.logger.log(JSON.stringify(conversations), 'conversations - getChatUsers');
+    return conversations;
   }
 
-  async getChats(page: number, limit: number, sender: User,receiver: string) {
-    const [chats, total] = await this.chatRepository.findAndCount({ where: [{ senderId: sender.id, receiverId: receiver }, { senderId: receiver, receiverId: sender.id }], order: { createdAt: 'DESC' }, relations: ['sender', 'receiver'] });
+  async getChats(page: number, limit: number, sender: User,conversationId: string) {
+    const [chats, total] = await this.chatRepository
+    .createQueryBuilder('chats')
+    .innerJoinAndSelect('chats.sender', 'sender')
+    .innerJoinAndSelect('chats.receiver', 'receiver')
+    .innerJoinAndSelect('chats.conversation', 'conversation', 'conversation.id = :conversationId', { conversationId })
+    .orderBy('chats.createdAt', 'ASC')
+    .getManyAndCount();
+    //const [chats, total] = await this.chatRepository.findAndCount({ where: { conversation: { id: conversationId } }, order: { createdAt: 'ASC' }, relations: ['sender', 'receiver'] });
     return {
       data: chats,
       pagination: {
@@ -74,5 +130,21 @@ export class ChatService {
         hasPrev: page > 1,
       },
     };
+  }
+
+  async sendMessage(sendMessageDto: SendMessageDto, user: User) {
+    const { conversationId, message, resources, receiverId } = sendMessageDto;
+    const conversation = await this.conversationRepository.findOne({ where: { id: conversationId } });
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+    const chat = await this.chatRepository.save(this.chatRepository.create({
+      conversation,
+      sender: user,
+      receiverId: receiverId,
+      message
+    }));
+    this.chatGateway.sendMessage(chat.conversation.id, { message: chat.message! ?? '' });
+    return chat;
   }
 }

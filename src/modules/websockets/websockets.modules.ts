@@ -8,7 +8,7 @@ import { ClassRoomGateway } from "./class-room-gateway/class-room-gateway";
   imports: [
     SharedModule,
   ],
-  exports: [ClassRoomGateway],
+  exports: [ClassRoomGateway, ChatGateway],
   providers: [ChatGateway, CallGateway, ClassRoomGateway],
 })
 export class WebsocketsModule {}

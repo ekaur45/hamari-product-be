@@ -29,6 +29,8 @@ import Currency from 'src/database/entities/currency.entity';
 import { EmailModule } from './email/email.module';
 import Otp from 'src/database/entities/otp.entity';
 import Chat from 'src/database/entities/chat.entity';
+import Conversation from 'src/database/entities/conversation.entity';
+import ChatResource from 'src/database/entities/chat-resource.entity';
 
 const ENTITIES = [
   User,
@@ -56,7 +58,9 @@ const ENTITIES = [
   BookPaymentLog,
   Currency,
   Otp,
-  Chat
+  Chat,
+  Conversation,
+  ChatResource
 ];
 
 @Module({
