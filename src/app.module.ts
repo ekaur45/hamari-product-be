@@ -34,6 +34,7 @@ import { NationalityModule } from './modules/nationality/nationality.module';
 import { FileModule } from './modules/file/file.module';
 import { PublicModule } from './modules/public/public.module';
 import { CurrencyModule } from './modules/currency/currency.module';
+import { ChatModule } from './modules/chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -107,6 +108,7 @@ import { CurrencyModule } from './modules/currency/currency.module';
     FileModule,
     PublicModule,
     CurrencyModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],

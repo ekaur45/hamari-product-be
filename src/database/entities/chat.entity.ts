@@ -1,7 +1,7 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import User from "./user.entity";
-import { Teacher } from "./teacher.entity";
 import ChatResource from "./chat-resource.entity";
+import Conversation from "./conversation.entity";
 
 @Entity('chats')
 export default class Chat {
@@ -25,7 +25,7 @@ export default class Chat {
     @Column({ type: 'text', nullable: true})
     message: string | null;
 
-    @OneToMany(() => ChatResource, (chatResource) => chatResource.chat,{cascade: true})
+    @OneToMany(() => ChatResource, (chatResource) => chatResource.chat,{cascade: true,nullable: true})
     resources: ChatResource[];
 
     @Column({ default: false })
@@ -37,9 +37,13 @@ export default class Chat {
     @Column({ default: false })
     isDeleted: boolean;
 
-    @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP' })
+    @ManyToOne(() => Conversation, (conversation) => conversation.id,{onDelete: 'CASCADE'})
+    @JoinColumn()
+    conversation: Conversation;
+
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     createdAt: Date;
 
-    @UpdateDateColumn({ default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
     updatedAt: Date;
 }

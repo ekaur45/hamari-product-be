@@ -28,6 +28,7 @@ import { CurrencyService } from './currency/currency.service';
 import Currency from 'src/database/entities/currency.entity';
 import { EmailModule } from './email/email.module';
 import Otp from 'src/database/entities/otp.entity';
+import Chat from 'src/database/entities/chat.entity';
 
 const ENTITIES = [
   User,
@@ -54,7 +55,8 @@ const ENTITIES = [
   AssignmentSubmission,
   BookPaymentLog,
   Currency,
-  Otp
+  Otp,
+  Chat
 ];
 
 @Module({
