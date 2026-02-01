@@ -103,7 +103,7 @@ export class TeacherService {
   async getTeacherBookings(user: User): Promise<TeacherBooking[]> {
     const teacher = await this.teacherRepository.findOne({
       where: { userId: user.id, isDeleted: false,teacherBookings: { isDeleted: false,status: In([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]) } },
-      relations: ['teacherBookings', 'teacherBookings.teacher', 'teacherBookings.student', 'teacherBookings.student.user', 'teacherBookings.teacherSubject', 'teacherBookings.availability', 'teacherBookings.teacherSubject.subject'],
+      relations: ['teacherBookings', 'teacherBookings.teacher', 'teacherBookings.student', 'teacherBookings.student.user','teacherBookings.student.user.details', 'teacherBookings.teacherSubject', 'teacherBookings.availability', 'teacherBookings.teacherSubject.subject'],
     });
     if (!teacher) {
       throw new NotFoundException('Teacher not found');
@@ -112,7 +112,7 @@ export class TeacherService {
   }
 
   async getTeacherBookingById(bookingId: string): Promise<TeacherBooking> {
-    const booking = await this.teacherBookingRepository.findOne({ where: { id: bookingId, isDeleted: false }, relations: ['teacher', 'student', 'student.user', 'teacherSubject', 'availability', 'teacherSubject.subject'] });
+    const booking = await this.teacherBookingRepository.findOne({ where: { id: bookingId, isDeleted: false }, relations: ['teacher', 'student', 'student.user','student.user.details', 'teacherSubject', 'availability', 'teacherSubject.subject'] });
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }

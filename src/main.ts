@@ -70,13 +70,13 @@ async function bootstrap() {
   app.setGlobalPrefix('/api', {
     exclude: ['/public/*'],
   });
-  app.use((req, res, next) => {
-    if (req.originalUrl === stripeWebhookPath) {
-      bodyParser.raw({ type: 'application/json' })(req, res, next);
-    } else {
-      json({ limit: '10mb' })(req, res, next);
-    }
-  });
+  // app.use((req, res, next) => {
+  //   if (req.originalUrl === stripeWebhookPath) {
+  //     bodyParser.raw({ type: 'application/json' })(req, res, next);
+  //   } else {
+  //     json({ limit: '10mb' })(req, res, next);
+  //   }
+  // });
   // Get logger instance for exception filter
   const exceptionLogger = await app.resolve(LoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(exceptionLogger));

@@ -65,7 +65,7 @@ export class StudentService {
         isDeleted: false,
         status: BookingStatus.CONFIRMED,
       },
-      relations: ['teacher', 'teacherSubject', 'availability', 'teacherSubject.subject', 'teacher.user'],
+      relations: ['teacher', 'teacherSubject', 'availability', 'teacherSubject.subject', 'teacher.user','teacher.user.details'],
     });
     const classBookings = await this.classBookingRepository.find({
       where: {
@@ -73,7 +73,7 @@ export class StudentService {
         isDeleted: false,
         status: BookingStatus.CONFIRMED,
       },
-      relations: ['class', 'class.teacher', 'class.teacher.user', 'class.subject', 'student', 'student.user', 'class.classBookings'],
+      relations: ['class', 'class.teacher', 'class.teacher.user','class.teacher.user.details', 'class.subject', 'student', 'student.user', 'class.classBookings'],
     });
 
     return {

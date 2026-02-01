@@ -22,9 +22,15 @@ export default class PaymentController {
         @Headers('stripe-signature') signature: string
     ) {
         const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
+        this.logger.log('Webhook received:', req.url);
+        this.logger.log('STRIPE_WEBHOOK_SECRET:', webhookSecret);
+        this.logger.log('Webhook received:', JSON.stringify(req.originalUrl));
+        this.logger.log('signature:', signature);
+        this.logger.log('headers:', JSON.stringify(req.headers));
+
         let event: Stripe.Event;
 
-        try {
+        try {            
             const buf = req.body as Buffer;
 
             event = this.stripe.webhooks.constructEvent(buf, signature, webhookSecret);
@@ -40,8 +46,8 @@ export default class PaymentController {
             res.json({ received: true });
 
         } catch (err) {
-            this.logger.error('Webhook Error:', err.message);
-            res.json({ received: false });
+            this.logger.error('Webhook Error:', JSON.stringify(err));
+            res.json({ received: false,err });
         }
     }
 

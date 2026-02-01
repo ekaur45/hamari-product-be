@@ -16,7 +16,7 @@ export class NotificationService {
     ) {}
 
     async createNotification(user: User, notification: Partial<Notification>): Promise<Notification> {
-        if([
+        /*if([
             NotificationType.NEW_REGISTER,
             NotificationType.BOOKING_CONFIRMED,
             NotificationType.PAYMENT_CONFIRMED,
@@ -27,7 +27,7 @@ export class NotificationService {
             NotificationType.PAYMENT_PARTIAL_REFUNDED,
         ].includes(notification.type as NotificationType)) {
             this.createNotificationForAdmin(notification);
-        }
+        }*/
         const newNotification = this.notificationRepository.create({
             type: notification.type || NotificationType.OTHER,
             title: notification.title || 'Notification',
