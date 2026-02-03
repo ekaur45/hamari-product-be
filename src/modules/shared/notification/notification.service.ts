@@ -5,6 +5,7 @@ import Notification from "src/database/entities/notification.entity";
 import User from "src/database/entities/user.entity";
 import { NotificationType, UserRole } from "../enums";
 import { Pagination } from "../models/api-response.model";
+import { MainGateway } from "src/modules/websockets/main.gateway";
 
 @Injectable()
 export class NotificationService {
@@ -13,6 +14,8 @@ export class NotificationService {
         private readonly notificationRepository: Repository<Notification>,
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+
+        private readonly mainGateway: MainGateway,
     ) {}
 
     async createNotification(user: User, notification: Partial<Notification>): Promise<Notification> {
@@ -36,7 +39,9 @@ export class NotificationService {
             redirectParams: notification.redirectParams || {},
             user,
         });
-        return this.notificationRepository.save(newNotification);
+        const savedNotification = await this.notificationRepository.save(newNotification);
+        this.mainGateway.server.emit(`notification_${user.id}`, { notification: savedNotification });
+        return savedNotification;
     }
 
 

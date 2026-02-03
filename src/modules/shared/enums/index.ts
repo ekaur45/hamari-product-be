@@ -148,5 +148,9 @@ export enum NotificationType {
   PAYMENT_PARTIAL_REFUNDED = 'payment_partial_refunded',
   NEW_REGISTER = 'new_register',
   PROFILE_COMPLETED = 'profile_completed',
+  NEW_ASSIGNMENT = 'new_assignment',
+  ASSIGNMENT_SUBMITTED = 'assignment_submitted',
+  ASSIGNMENT_GRADED = 'assignment_graded',
+  ASSIGNMENT_RETURNED = 'assignment_returned',
   OTHER = 'other',
 }

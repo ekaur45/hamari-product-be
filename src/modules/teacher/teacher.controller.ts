@@ -35,6 +35,8 @@ import TeacherStudentsListDto from './dto/teacher-students-list.dto';
 import StudentPerformanceDto from './dto/student-performance.dto';
 import TeacherReviewsListDto from './dto/teacher-reviews-list.dto';
 import Review from 'src/database/entities/review.entity';
+import { TeacherSessionsDto } from './dto/sessions.dto';
+import { PaginationRequest } from 'src/models/common/pagination.model';
 
 
 
@@ -245,6 +247,23 @@ export class TeacherController {
     result.stats = stats;
     
     return ApiResponseModel.success(result, 'Teacher reviews retrieved successfully');
+  }
+
+  @Get(':teacherId/sessions')
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher sessions retrieved successfully',
+    type: ApiResponseModel<TeacherSessionsDto>,
+  })
+  async getTeacherSessions(
+    @Param('teacherId') teacherId: string, @Request() req: { user: User },
+    @Query() paginationRequest: PaginationRequest
+  ): Promise<ApiResponseModel<TeacherSessionsDto>> {
+    // if(teacherId !== req.user.id) {
+    //   throw new ForbiddenException('You are not authorized to access this resource');
+    // }
+    const sessions = await this.teacherService.getTeacherSessions(teacherId, req.user, paginationRequest);
+    return ApiResponseModel.success(sessions, 'Teacher sessions retrieved successfully');
   }
 
 }

@@ -18,6 +18,8 @@ import AssignmentSubmission from 'src/database/entities/assignment-submission.en
 import Review from 'src/database/entities/review.entity';
 import { BookingStatus, UserRole } from 'src/modules/shared/enums';
 import Currency from 'src/database/entities/currency.entity';
+import { TeacherSessionsDto } from './dto/sessions.dto';
+import { PaginationRequest } from 'src/models/common/pagination.model';
 @Injectable()
 export class TeacherService {
   constructor(
@@ -112,7 +114,7 @@ export class TeacherService {
   }
 
   async getTeacherBookingById(bookingId: string): Promise<TeacherBooking> {
-    const booking = await this.teacherBookingRepository.findOne({ where: { id: bookingId, isDeleted: false }, relations: ['teacher', 'student', 'student.user','student.user.details', 'teacherSubject', 'availability', 'teacherSubject.subject'] });
+    const booking = await this.teacherBookingRepository.findOne({ where: { id: bookingId, isDeleted: false }, relations: ['teacher','teacher.user','teacher.user.details', 'student', 'student.user','student.user.details', 'teacherSubject', 'availability', 'teacherSubject.subject'] });
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }
@@ -507,5 +509,37 @@ export class TeacherService {
       return amount;
     }
     return (Number(amount) * baseCurrency.exchangeRate) / selectedCurrency.exchangeRate;
+  }
+  async getTeacherSessions(teacherId: string, user: User, paginationRequest: PaginationRequest): Promise<TeacherSessionsDto> {
+    const query = this.teacherBookingRepository.createQueryBuilder('teacherBooking')
+      .leftJoinAndSelect('teacherBooking.student', 'student')
+      .leftJoinAndSelect('student.user', 'user')
+      .leftJoinAndSelect('user.details', 'details')
+      .leftJoinAndSelect('teacherBooking.teacherSubject', 'teacherSubject')
+      .leftJoinAndSelect('teacherSubject.subject', 'subject')
+      .leftJoinAndSelect('teacherBooking.availability', 'availability')
+      .leftJoinAndSelect('teacherBooking.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .leftJoinAndSelect('teacherUser.details', 'teacherDetails')
+      .where('teacher.userId = :userId', { userId: user.id })
+      .andWhere('teacherBooking.isDeleted = false')
+      .andWhere('teacherBooking.status not in (:...statuses)', { statuses: [BookingStatus.CANCELLED, BookingStatus.PENDING] });
+query.orderBy('teacherBooking.createdAt', 'DESC');
+    query.skip((paginationRequest.page - 1) * paginationRequest.limit);
+    query.take(paginationRequest.limit);
+
+    const [sessions, total] = await query.getManyAndCount();
+
+    return {
+      sessions: sessions,
+      pagination: {
+        page: paginationRequest.page,
+        limit: paginationRequest.limit,
+        total: total,
+        totalPages: Math.ceil(total / paginationRequest.limit),
+        hasNext: paginationRequest.page < Math.ceil(total / paginationRequest.limit),
+        hasPrev: paginationRequest.page > 1,
+      },
+    };
   }
 }

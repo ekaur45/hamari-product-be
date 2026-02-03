@@ -12,7 +12,7 @@ import ClassBooking from 'src/database/entities/class-booking.entity';
 import Assignment, { AssignmentStatus } from 'src/database/entities/assignment.entity';
 import AssignmentSubmission, { SubmissionStatus } from 'src/database/entities/assignment-submission.entity';
 import Review from 'src/database/entities/review.entity';
-import { UserRole } from '../shared/enums';
+import { NotificationType, UserRole } from '../shared/enums';
 import { SubmitAssignmentDto } from './dto/submit-assignment.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
 import StudentAssignmentListDto from './dto/student-assignment-list.dto';
@@ -20,6 +20,7 @@ import StudentBookingListDto from './dto/student-booking-list.dto';
 import StudentPerformanceDto from '../teacher/dto/student-performance.dto';
 import { BookingStatus } from '../shared/enums';
 import { Teacher } from 'src/database/entities/teacher.entity';
+import { NotificationService } from '../shared/notification/notification.service';
 
 
 @Injectable()
@@ -48,6 +49,8 @@ export class StudentService {
 
     @InjectRepository(Teacher)
     private readonly teacherRepository: Repository<Teacher>,
+
+    private readonly notificationService: NotificationService,
   ) { }
 
   async getSchedule(user: User): Promise<StudentScheduleDto> {
@@ -112,11 +115,11 @@ export class StudentService {
     }
 
     // Get assignments from classes student is enrolled in
-    const classBookings = await this.classBookingRepository.find({
-      where: { studentId: student.id, isDeleted: false },
-      relations: ['class'],
-    });
-    const classIds = classBookings.map(cb => cb.classId);
+    // const classBookings = await this.classBookingRepository.find({
+    //   where: { studentId: student.id, isDeleted: false },
+    //   relations: ['class'],
+    // });
+    const classIds = [];// classBookings.map(cb => cb.classId);
 
     // Get assignments from teacher bookings
     const teacherBookings = await this.teacherBookingRepository.find({
@@ -132,7 +135,7 @@ export class StudentService {
       .leftJoinAndSelect('teacher.user', 'teacherUser')
       .leftJoinAndSelect('assignment.submissions', 'submissions', 'submissions.studentId = :studentId AND submissions.isDeleted = false', { studentId: student.id })
       .where('assignment.isDeleted = :isDeleted', { isDeleted: false })
-      .andWhere('assignment.status = :status', { status: AssignmentStatus.PUBLISHED });
+      .andWhere('assignment.status != :status', { status: AssignmentStatus.DRAFT });
 
     if (classIds.length > 0 || teacherBookingIds.length > 0) {
       const conditions: string[] = [];
@@ -171,7 +174,7 @@ export class StudentService {
       .getManyAndCount();
 
     const result = new StudentAssignmentListDto();
-    result.assignments = assignments;
+    result.data = assignments;
     result.total = total;
     result.pagination = {
       page: filters.page,
@@ -301,7 +304,20 @@ export class StudentService {
       });
     }
 
-    return await this.submissionRepository.save(submission);
+    const savedSubmission = await this.submissionRepository.save(submission);
+    const bookinging = await this.teacherBookingRepository.findOne({
+      where: { id: assignment.teacherBookingId!, isDeleted: false },
+      relations: ['teacher', 'teacher.user', 'teacher.user.details', 'student', 'student.user','student.user.details'],
+    });
+    this.notificationService.createNotification(bookinging!.teacher.user, {
+      type: NotificationType.ASSIGNMENT_SUBMITTED,
+      title: 'New assignment created',
+      message: `<span class="font-bold text-primary">${bookinging!.student.user.firstName} ${bookinging!.student.user.lastName}</span> has submitted a new assignment <span class="font-bold text-gray-500">${assignment.title}</span> for you. Due date: <span class="font-bold text-gray-500">${assignment.dueDate?.toLocaleDateString()}</span>`,
+      redirectPath: '/student/assignments',
+      redirectParams: { assignmentId: assignment.id },
+      user: bookinging!.teacher.user,
+    });
+    return savedSubmission;
   }
 
   async getMySubmissions(

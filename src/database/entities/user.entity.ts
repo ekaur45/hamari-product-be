@@ -17,6 +17,7 @@ import { Parent } from './parent.entity';
 import { Expose } from 'class-transformer';
 import Otp from './otp.entity';
 import Notification from './notification.entity';
+import Assignment from './assignment.entity';
 
 
 @Entity('users')
@@ -85,6 +86,9 @@ export default class User {
 
   @Column({ type: 'boolean', default: false })
   hasCompletedProfile: boolean;
+
+  @OneToMany(() => Assignment, (assignment) => assignment.studentUser,{cascade: true})
+  assignments?: Assignment[] | null;
 
   @Expose()
   public get isProfileComplete(): boolean {

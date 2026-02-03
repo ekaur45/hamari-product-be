@@ -105,7 +105,6 @@ export class ClassRoomGateway implements OnGatewayConnection, OnGatewayDisconnec
             client.disconnect();
             return;
         }
-        console.log('student-joined-class_' + booking.id, { bookingId: booking.id, studentId: data.studentId });
         this.server.emit('student-joined-class_' + booking.id + '_' + data.studentId, { bookingId: booking.id, studentId: data.studentId });
     }
     @SubscribeMessage('teacher-joined-class')
@@ -116,14 +115,12 @@ export class ClassRoomGateway implements OnGatewayConnection, OnGatewayDisconnec
             client.disconnect();
             return;
         }
-        console.log('teacher-joined-class_' + booking.id, { bookingId: booking.id, teacherId: data.teacherId });
         this.server.emit('teacher-joined-class_' + booking.id + '_' + data.teacherId, { bookingId: booking.id, teacherId: data.teacherId });
     }
 
 
     @SubscribeMessage('join')
-    handleJoinRoom(@MessageBody() data: { roomId: string; userId: string }, @ConnectedSocket() client: Socket) {
-        console.log('joinRoom', data);
+    handleJoinRoom(@MessageBody() data: { roomId: string; userId: string }, @ConnectedSocket() client: Socket) {        
         const { roomId, userId } = data;
         client.join(roomId);
 
@@ -141,7 +138,6 @@ export class ClassRoomGateway implements OnGatewayConnection, OnGatewayDisconnec
 
     @SubscribeMessage('leave')
     handleLeaveRoom(@MessageBody() data: { roomId: string; userId: string }, @ConnectedSocket() client: Socket) {
-        console.log('leaveRoom', data);
         const { roomId, userId } = data;
         client.leave(roomId);
 
@@ -154,35 +150,35 @@ export class ClassRoomGateway implements OnGatewayConnection, OnGatewayDisconnec
 
     @SubscribeMessage('signal')
     handleSignal(@MessageBody() data: { bookingId: string, userId: string; signal: any }, @ConnectedSocket() client: Socket) {
-        console.log('handleSignal', data);
-        console.log('signal', data);
         const roomId = "class_" + data.bookingId;
         client.to(roomId).emit('signal', { signal: data.signal, userId: data.userId });
     }
 
     @SubscribeMessage('mute')
     handleMute(@MessageBody() data: { bookingId: string, userId: string; isMuted: boolean }, @ConnectedSocket() client: Socket) {
-        console.log('handleMute', data);
         const roomId = "class_" + data.bookingId;
         client.to(roomId).emit('mute', { userId: data.userId, isMuted: data.isMuted });
     }
 
     @SubscribeMessage('unmute')
     handleUnmute(@MessageBody() data: { bookingId: string, userId: string; isMuted: boolean }, @ConnectedSocket() client: Socket) {
-        console.log('handleUnmute', data);
         const roomId = "class_" + data.bookingId;
         client.to(roomId).emit('unmute', { userId: data.userId, isMuted: data.isMuted });
     }
     @SubscribeMessage('mute-video')
     handleVideoOn(@MessageBody() data: { bookingId: string, userId: string; isVideoOn: boolean }, @ConnectedSocket() client: Socket) {
-        console.log('handleVideoOn', data);
         const roomId = "class_" + data.bookingId;
         client.to(roomId).emit('mute-video', { userId: data.userId, isVideoOn: data.isVideoOn });
     }
     @SubscribeMessage('unmute-video')
     handleVideoOff(@MessageBody() data: { bookingId: string, userId: string; isVideoOn: boolean }, @ConnectedSocket() client: Socket) {
-        console.log('handleVideoOff', data);
         const roomId = "class_" + data.bookingId;
         client.to(roomId).emit('unmute-video', { userId: data.userId, isVideoOn: data.isVideoOn });
+    }
+
+    @SubscribeMessage('end-call')
+    handleEndCall(@MessageBody() data: { bookingId: string, userId: string }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        client.to(roomId).emit('call-ended', { userId: data.userId });
     }
 }

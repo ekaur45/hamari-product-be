@@ -14,6 +14,8 @@ import { GradeSubmissionDto } from './dto/grade-submission.dto';
 import AssignmentListDto from './dto/assignment-list.dto';
 import SubmissionListDto from './dto/submission-list.dto';
 import { Pagination } from '../shared/models/api-response.model';
+import { NotificationService } from '../shared/notification/notification.service';
+import { NotificationType } from '../shared/enums';
 
 @Injectable()
 export class AssignmentService {
@@ -30,6 +32,7 @@ export class AssignmentService {
     private readonly teacherBookingRepository: Repository<TeacherBooking>,
     @InjectRepository(Student)
     private readonly studentRepository: Repository<Student>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async createAssignment(teacherId: string, createDto: CreateAssignmentDto, user: User): Promise<Assignment> {
@@ -37,19 +40,19 @@ export class AssignmentService {
       where: { userId: user.id, isDeleted: false },
     });
 
-    if (!teacher || teacher.id !== teacherId) {
+    if (!teacher) {
       throw new ForbiddenException('You can only create assignments for your own teacher account');
     }
 
     // Validate class or booking ownership
-    if (createDto.classId) {
-      const classEntity = await this.classRepository.findOne({
-        where: { id: createDto.classId, teacherId: teacher.id, isDeleted: false },
-      });
-      if (!classEntity) {
-        throw new NotFoundException('Class not found or you do not have access to it');
-      }
-    }
+    // if (createDto.classId) {
+    //   const classEntity = await this.classRepository.findOne({
+    //     where: { id: createDto.classId, teacherId: teacher.id, isDeleted: false },
+    //   });
+    //   if (!classEntity) {
+    //     throw new NotFoundException('Class not found or you do not have access to it');
+    //   }
+    // }
 
     if (createDto.teacherBookingId) {
       const booking = await this.teacherBookingRepository.findOne({
@@ -60,18 +63,35 @@ export class AssignmentService {
       }
     }
 
-    if (!createDto.classId && !createDto.teacherBookingId) {
-      throw new BadRequestException('Either classId or teacherBookingId must be provided');
-    }
+    // if (!createDto.classId && !createDto.teacherBookingId) {
+    //   throw new BadRequestException('Either classId or teacherBookingId must be provided');
+    // }
 
     const assignment = this.assignmentRepository.create({
       ...createDto,
       teacherId: teacher.id,
       dueDate: createDto.dueDate ? new Date(createDto.dueDate) : null,
       submissionDate: createDto.submissionDate ? new Date(createDto.submissionDate) : null,
+      attachments: createDto.attachments ? createDto.attachments.map(attachment => attachment.url) : null,
+      status: AssignmentStatus.PUBLISHED,
+      studentUserId: createDto.studentUserId,
     });
-
-    return await this.assignmentRepository.save(assignment);
+    const savedAssignment = await this.assignmentRepository.save(assignment);
+    // teacher details
+    const bookinging = await this.teacherBookingRepository.findOne({
+      where: { id: createDto.teacherBookingId, isDeleted: false },
+      relations: ['teacher', 'teacher.user', 'teacher.user.details', 'student', 'student.user','student.user.details'],
+    });
+    // student details
+    this.notificationService.createNotification(bookinging!.student.user, {
+      type: NotificationType.NEW_ASSIGNMENT,
+      title: 'New assignment created',
+      message: `<span class="font-bold text-primary">${bookinging!.teacher.user.firstName} ${bookinging!.teacher.user.lastName}</span> has created a new assignment <span class="font-bold text-gray-500">${assignment.title}</span> for you. Due date: <span class="font-bold text-gray-500">${assignment.dueDate?.toLocaleDateString()}</span>`,
+      redirectPath: '/student/assignments',
+      redirectParams: { assignmentId: assignment.id },
+      user: bookinging!.student.user,
+    });
+    return savedAssignment;
   }
 
   async getTeacherAssignments(
@@ -83,7 +103,7 @@ export class AssignmentService {
       where: { userId: user.id, isDeleted: false },
     });
 
-    if (!teacher || teacher.id !== teacherId) {
+    if (!teacher) {
       throw new ForbiddenException('You can only view your own assignments');
     }
 
@@ -92,6 +112,8 @@ export class AssignmentService {
       .leftJoinAndSelect('assignment.class', 'class')
       .leftJoinAndSelect('assignment.teacherBooking', 'teacherBooking')
       .leftJoinAndSelect('assignment.submissions', 'submissions')
+      .leftJoinAndSelect('assignment.studentUser', 'studentUser')
+      .leftJoinAndSelect('studentUser.details', 'studentUserDetails')
       .where('assignment.teacherId = :teacherId', { teacherId: teacher.id })
       .andWhere('assignment.isDeleted = :isDeleted', { isDeleted: false });
 
@@ -111,7 +133,7 @@ export class AssignmentService {
       .getManyAndCount();
 
     const result = new AssignmentListDto();
-    result.assignments = assignments;
+    result.data = assignments;
     result.total = total;
     result.pagination = {
       page: filters.page,
@@ -285,7 +307,22 @@ export class AssignmentService {
     submission.gradedAt = new Date();
     submission.gradedBy = teacher.id;
 
-    return await this.submissionRepository.save(submission);
+    const savedSubmission = await this.submissionRepository.save(submission);
+    assignment.status = AssignmentStatus.GRADED;
+    await this.assignmentRepository.save(assignment);
+    const bookinging = await this.teacherBookingRepository.findOne({
+      where: { id: assignment.teacherBookingId!, isDeleted: false },
+      relations: ['teacher', 'teacher.user', 'teacher.user.details', 'student', 'student.user','student.user.details'],
+    });
+    this.notificationService.createNotification(bookinging!.student.user, {
+      type: NotificationType.ASSIGNMENT_GRADED,
+      title: 'Assignment graded',
+      message: `<span class="font-bold text-primary">${bookinging!.teacher.user.firstName} ${bookinging!.teacher.user.lastName}</span> has graded your assignment <span class="font-bold text-gray-500">${assignment.title}</span>. Score: <span class="font-bold text-gray-500">${submission.score}</span>`,
+      redirectPath: '/student/assignments',
+      redirectParams: { assignmentId: assignment.id },
+      user: bookinging!.student.user,
+    });
+    return savedSubmission;
   }
 }
 

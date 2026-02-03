@@ -3,6 +3,7 @@ import { Teacher } from './teacher.entity';
 import ClassEntity from './classes.entity';
 import TeacherBooking from './teacher-booking.entity';
 import AssignmentSubmission from './assignment-submission.entity';
+import User from './user.entity';
 
 export enum AssignmentType {
   HOMEWORK = 'homework',
@@ -95,5 +96,12 @@ export default class Assignment {
 
   @OneToMany(() => AssignmentSubmission, (submission) => submission.assignment)
   submissions: AssignmentSubmission[];
+
+  @Column({ type: 'uuid', nullable: true })
+  studentUserId: string | null;
+
+  @ManyToOne(() => User, (user) => user.assignments)
+  @JoinColumn({ name: 'studentUserId' })
+  studentUser: User | null;
 }
 
