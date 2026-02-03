@@ -6,6 +6,7 @@ import User from "src/database/entities/user.entity";
 import { NotificationType, UserRole } from "../enums";
 import { Pagination } from "../models/api-response.model";
 import { MainGateway } from "src/modules/websockets/main.gateway";
+import { NotificationSearchDto } from "./dto/notification-search.dto";
 
 @Injectable()
 export class NotificationService {
@@ -45,22 +46,35 @@ export class NotificationService {
     }
 
 
-    async getNotifications(userId: string, page: number, limit: number, type?: NotificationType): Promise< { data: Notification[], total: number, pagination: Pagination }> {
-        const where: FindOptionsWhere<Notification> = { user: { id: userId } };
-        if (type) {
-            where.type = type;
+    async getNotifications(userId: string, filters: NotificationSearchDto): Promise< { data: Notification[], total: number, pagination: Pagination }> {
+        
+        let query = this.notificationRepository.createQueryBuilder('notification')
+        .leftJoinAndSelect('notification.user', 'user')
+        .leftJoinAndSelect('user.details', 'userDetails')
+        .where('notification.user.id = :userId', { userId })
+        if (filters.types && filters.types.length > 0) {
+            query.andWhere('notification.type IN (:...types)', { types: filters.types });
         }
-        const [notifications, total] = await this.notificationRepository.findAndCount({ where, order: { createdAt: 'DESC' } });
+        if (filters.search) {
+            query.andWhere('notification.title LIKE :search OR notification.message LIKE :search', { search: `%${filters.search}%` });
+        }
+        if (filters.isRead === true || filters.isRead === false) {
+            query.andWhere('notification.isRead = :isRead', { isRead: filters.isRead });
+        }
+        query.orderBy('notification.createdAt', 'DESC');
+        query.skip((filters.page - 1) * filters.limit);
+        query.take(filters.limit);
+        const [notifications, total] = await query.getManyAndCount();
         return {
             data: notifications,
             total,
             pagination: {
-                page,
-                limit,
+                page: filters.page,
+                limit: filters.limit,
                 total,
-                totalPages: Math.ceil(total / limit),
-                hasNext: page < Math.ceil(total / limit),
-                hasPrev: page > 1,
+                totalPages: Math.ceil(total / filters.limit),
+                hasNext: filters.page < Math.ceil(total / filters.limit),
+                hasPrev: filters.page > 1,
             },
         };
     }

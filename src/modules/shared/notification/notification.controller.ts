@@ -5,6 +5,7 @@ import { ApiResponseModel } from "../models/api-response.model";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../guards/jwt-auth.guard";
 import { NotificationType } from "../enums";
+import { NotificationSearchDto } from "./dto/notification-search.dto";
 
 @Controller('notifications')
 @ApiTags('Notifications')
@@ -14,8 +15,8 @@ export class NotificationController {
     constructor(private readonly notificationService: NotificationService) {}
 
     @Get()
-    async getNotifications(@Request() req: { user: User }, @Query('page') page: number = 1, @Query('limit') limit: number = 10, @Query('type') type?: NotificationType) {
-        const notifications = await this.notificationService.getNotifications(req.user.id, page, limit, type);
+    async getNotifications(@Request() req: { user: User }, @Query() filters: NotificationSearchDto) {
+        const notifications = await this.notificationService.getNotifications(req.user.id, filters);
         return ApiResponseModel.success(notifications, 'Notifications retrieved successfully');
     }
     @Put('read')
