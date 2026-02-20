@@ -120,7 +120,7 @@ export class ClassRoomGateway implements OnGatewayConnection, OnGatewayDisconnec
 
 
     @SubscribeMessage('join')
-    handleJoinRoom(@MessageBody() data: { roomId: string; userId: string }, @ConnectedSocket() client: Socket) {        
+    handleJoinRoom(@MessageBody() data: { roomId: string; userId: string }, @ConnectedSocket() client: Socket) {
         const { roomId, userId } = data;
         client.join(roomId);
 
@@ -180,5 +180,67 @@ export class ClassRoomGateway implements OnGatewayConnection, OnGatewayDisconnec
     handleEndCall(@MessageBody() data: { bookingId: string, userId: string }, @ConnectedSocket() client: Socket) {
         const roomId = "class_" + data.bookingId;
         client.to(roomId).emit('call-ended', { userId: data.userId });
+    }
+
+    @SubscribeMessage('whiteboard-open')
+    handleWhiteboardOpen(@MessageBody() data: { bookingId: string, userId: string }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        client.to(roomId).emit('whiteboard-open', { userId: data.userId });
+    }
+
+    @SubscribeMessage('whiteboard-close')
+    handleWhiteboardClose(@MessageBody() data: { bookingId: string, userId: string }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        client.to(roomId).emit('whiteboard-close', { userId: data.userId });
+    }
+
+    @SubscribeMessage('screen-share-start')
+    handleScreenShareStart(@MessageBody() data: { bookingId: string, userId: string }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        client.to(roomId).emit('screen-share-start', { userId: data.userId });
+    }
+
+    @SubscribeMessage('screen-share-stop')
+    handleScreenShareStop(@MessageBody() data: { bookingId: string, userId: string }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        client.to(roomId).emit('screen-share-stop', { userId: data.userId });
+    }
+    @SubscribeMessage('whiteboard-object-added')
+    handleWhiteboardObjectAdded(@MessageBody() data: { bookingId: string, userId: string, objectData: any }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        // Broadcast to all other clients in the room (not the sender)
+        client.to(roomId).emit(`whiteboard-object-added_${data.bookingId}`, {
+            objectData: data.objectData,
+            userId: data.userId
+        });
+    }
+
+    @SubscribeMessage('whiteboard-object-modified')
+    handleWhiteboardObjectModified(@MessageBody() data: { bookingId: string, userId: string, objectData: any }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        // Broadcast to all other clients in the room (not the sender)
+        client.to(roomId).emit(`whiteboard-object-modified_${data.bookingId}`, {
+            objectData: data.objectData,
+            userId: data.userId
+        });
+    }
+
+    @SubscribeMessage('whiteboard-object-removed')
+    handleWhiteboardObjectRemoved(@MessageBody() data: { bookingId: string, userId: string, objectId: string }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        // Broadcast to all other clients in the room (not the sender)
+        client.to(roomId).emit(`whiteboard-object-removed_${data.bookingId}`, {
+            objectId: data.objectId,
+            userId: data.userId
+        });
+    }
+
+    @SubscribeMessage('whiteboard-cleared')
+    handleWhiteboardCleared(@MessageBody() data: { bookingId: string, userId: string }, @ConnectedSocket() client: Socket) {
+        const roomId = "class_" + data.bookingId;
+        // Broadcast to all other clients in the room (not the sender)
+        client.to(roomId).emit(`whiteboard-cleared_${data.bookingId}`, {
+            userId: data.userId
+        });
     }
 }
