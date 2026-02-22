@@ -77,12 +77,17 @@ export class EnrollmentService {
       where: { studentId: student.id },
       relations: ['class', 'class.teacher', 'class.teacher.user'],
     });
-
-    const teacherBookings = await this.teacherBookingRepository.find({
-      where: { studentId: student.id },
-      relations: ['teacher', 'teacher.user', 'teacherSubject', 'teacherSubject.subject'],
-    });
-
+    const teacherBookingQuery = this.teacherBookingRepository.createQueryBuilder('teacherBooking');
+    teacherBookingQuery.leftJoinAndSelect('teacherBooking.teacher', 'teacher')
+    teacherBookingQuery.leftJoinAndSelect('teacher.user', 'user')
+    teacherBookingQuery.leftJoinAndSelect('teacherBooking.teacherSubject', 'teacherSubject')
+    teacherBookingQuery.leftJoinAndSelect('teacherSubject.subject', 'subject')
+    teacherBookingQuery.where('teacherBooking.studentId = :studentId', { studentId: student.id })
+    teacherBookingQuery.andWhere('teacherBooking.status not in (:...statuses)', { statuses: [BookingStatus.PENDING, BookingStatus.CANCELLED] })
+    teacherBookingQuery.andWhere('teacherBooking.isDeleted = false')
+    teacherBookingQuery.andWhere('teacherBooking.bookingDate >= CURRENT_TIMESTAMP')
+    teacherBookingQuery.orderBy('teacherBooking.bookingDate', 'DESC');
+    const teacherBookings = await teacherBookingQuery.getMany();
     return { classBookings, teacherBookings };
   }
 
