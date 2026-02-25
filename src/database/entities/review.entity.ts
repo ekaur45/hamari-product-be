@@ -29,18 +29,18 @@ export default class Review {
     revieweeRole: UserRole;
 
     @Column({ type: 'int', nullable: true })
-    punctuality: number;
+    punctuality: number | null;
     @Column({ type: 'int', nullable: true })
-    engagement: number;
+    engagement: number | null;
     @Column({ type: 'int', nullable: true })
-    knowledge: number;
+    knowledge: number | null;
     @Column({ type: 'int', nullable: true })
-    communication: number;
+    communication: number | null;
     @Column({ type: 'int', nullable: true })
-    overallExperience: number;
+    overallExperience: number | null;
 
     @Column({ type: 'int', nullable: true })
-    rating: number;
+    rating: number | null;
 
     @Column({ type: 'text', nullable: true })
     comment: string | null;

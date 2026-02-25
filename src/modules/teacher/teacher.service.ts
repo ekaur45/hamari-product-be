@@ -465,7 +465,7 @@ export class TeacherService {
 
     const totalReviews = reviews.length;
     const averageRating = totalReviews > 0
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+      ? reviews.reduce((sum, review) => sum + (review.rating??0), 0) / totalReviews
       : 0;
 
     // Rating distribution
@@ -474,7 +474,7 @@ export class TeacherService {
       distribution.set(i, 0);
     }
     reviews.forEach(review => {
-      distribution.set(review.rating, (distribution.get(review.rating) || 0) + 1);
+      distribution.set((review.rating??0), (distribution.get((review.rating??0)) || 0) + 1);
     });
 
     const ratingDistribution = Array.from(distribution.entries()).map(([rating, count]) => ({
@@ -519,8 +519,9 @@ export class TeacherService {
       .leftJoinAndSelect('teacherSubject.subject', 'subject')
       .leftJoinAndSelect('teacherBooking.availability', 'availability')
       .leftJoinAndSelect('teacherBooking.teacher', 'teacher')
+      .leftJoinAndSelect('teacherBooking.reviews', 'reviews','reviews.reviewerId=teacher.userId')
       .leftJoinAndSelect('teacher.user', 'teacherUser')
-      .leftJoinAndSelect('teacherUser.details', 'teacherDetails')
+      .leftJoinAndSelect('teacherUser.details', 'teacherDetails')      
       .where('teacher.userId = :userId', { userId: user.id })
       .andWhere('teacherBooking.isDeleted = false')
       .andWhere('teacherBooking.status not in (:...statuses)', { statuses: [BookingStatus.CANCELLED, BookingStatus.PENDING] });

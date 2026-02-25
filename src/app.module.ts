@@ -36,6 +36,7 @@ import { PublicModule } from './modules/public/public.module';
 import { CurrencyModule } from './modules/currency/currency.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { NotificationModule } from './modules/shared/notification/notification.module';
+import ReviewsModule from './modules/reviews/reviews.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -111,6 +112,7 @@ import { NotificationModule } from './modules/shared/notification/notification.m
     CurrencyModule,
     ChatModule,
     NotificationModule,
+    ReviewsModule
   ],
   controllers: [],
   providers: [],
