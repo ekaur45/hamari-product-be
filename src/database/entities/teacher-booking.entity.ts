@@ -1,9 +1,10 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Teacher } from "./teacher.entity";
 import { Student } from "./student.entity";
 import TeacherSubject from "./teacher-subject.entity";
 import { BookingStatus } from "../../modules/shared/enums";
 import Availability from "./availablility.entity";
+import Review from "./review.entity";
 @Entity('teacher_bookings')
 export default class TeacherBooking {
     @PrimaryGeneratedColumn('uuid')
@@ -58,4 +59,6 @@ export default class TeacherBooking {
     @Column({ default: false })
     isDeleted: boolean;
 
+    @OneToMany(() => Review, (review) => review.teacherBooking)
+    reviews: Review[] | null;
 }

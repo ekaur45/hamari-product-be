@@ -389,6 +389,7 @@ export class StudentService {
       .leftJoinAndSelect('booking.teacherSubject', 'teacherSubject')
       .leftJoinAndSelect('teacherSubject.subject', 'subject')
       .leftJoinAndSelect('booking.availability', 'availability')
+      .leftJoinAndSelect('booking.reviews', 'reviews')
       .where('booking.studentId = :studentId', { studentId: student.id })
       .andWhere('booking.isDeleted = :isDeleted AND booking.status in (:...statuses)', { isDeleted: false, statuses: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED,BookingStatus.CANCELLED] });
 

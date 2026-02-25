@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import User from "./user.entity";
 import { UserRole } from "src/modules/shared/enums";
+import TeacherBooking from "./teacher-booking.entity";
 
 @Entity('reviews')
 export default class Review {
@@ -44,5 +45,12 @@ export default class Review {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+
+    @Column({ type: 'uuid', nullable: true })
+    teacherBookingId: string;
+    @ManyToOne(() => TeacherBooking, (teacherBooking) => teacherBooking.reviews)
+    @JoinColumn({ name: 'teacherBookingId' })
+    teacherBooking: TeacherBooking | null;
 }
 
