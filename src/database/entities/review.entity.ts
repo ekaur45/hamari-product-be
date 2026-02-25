@@ -28,7 +28,18 @@ export default class Review {
     @Column({ type: 'enum', enum: UserRole })
     revieweeRole: UserRole;
 
-    @Column({ type: 'int' })
+    @Column({ type: 'int', nullable: true })
+    punctuality: number;
+    @Column({ type: 'int', nullable: true })
+    engagement: number;
+    @Column({ type: 'int', nullable: true })
+    knowledge: number;
+    @Column({ type: 'int', nullable: true })
+    communication: number;
+    @Column({ type: 'int', nullable: true })
+    overallExperience: number;
+
+    @Column({ type: 'int', nullable: true })
     rating: number;
 
     @Column({ type: 'text', nullable: true })
