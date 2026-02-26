@@ -5,6 +5,7 @@ import TeacherSubject from "./teacher-subject.entity";
 import { BookingStatus } from "../../modules/shared/enums";
 import Availability from "./availablility.entity";
 import Review from "./review.entity";
+import Assignment from "./assignment.entity";
 @Entity('teacher_bookings')
 export default class TeacherBooking {
     @PrimaryGeneratedColumn('uuid')
@@ -61,4 +62,9 @@ export default class TeacherBooking {
 
     @OneToMany(() => Review, (review) => review.teacherBooking)
     reviews: Review[] | null;
+    
+
+    @OneToMany(() => Assignment, assignment => assignment.teacherBooking)
+    assignments: Assignment[];
+
 }

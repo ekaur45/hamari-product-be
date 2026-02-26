@@ -37,6 +37,7 @@ import TeacherReviewsListDto from './dto/teacher-reviews-list.dto';
 import Review from 'src/database/entities/review.entity';
 import { TeacherSessionsDto } from './dto/sessions.dto';
 import { PaginationRequest } from 'src/models/common/pagination.model';
+import TeacherSessionDetailsDto from './dto/session-details.dto';
 
 
 
@@ -265,5 +266,17 @@ export class TeacherController {
     const sessions = await this.teacherService.getTeacherSessions(teacherId, req.user, paginationRequest);
     return ApiResponseModel.success(sessions, 'Teacher sessions retrieved successfully');
   }
-
+  @Get(':teacherId/sessions/:bookingId')
+  @ApiResponse({
+    status: 200,
+    description: 'Teacher session details retrieved successfully',
+    type: ApiResponseModel<TeacherSessionDetailsDto>,
+  })
+  async getTeacherSessionDetails(
+    @Param('teacherId') teacherId: string, @Request() req: { user: User },
+    @Param('bookingId') bookingId: string,
+  ){
+    const result = await this.teacherService.getTeacherSessionDetails(teacherId,bookingId,req.user);
+    return ApiResponseModel.success(result);
+  }
 }

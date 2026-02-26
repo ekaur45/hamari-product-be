@@ -20,6 +20,7 @@ import { BookingStatus, UserRole } from 'src/modules/shared/enums';
 import Currency from 'src/database/entities/currency.entity';
 import { TeacherSessionsDto } from './dto/sessions.dto';
 import { PaginationRequest } from 'src/models/common/pagination.model';
+import TeacherSessionDetailsDto from './dto/session-details.dto';
 @Injectable()
 export class TeacherService {
   constructor(
@@ -104,8 +105,8 @@ export class TeacherService {
   }
   async getTeacherBookings(user: User): Promise<TeacherBooking[]> {
     const teacher = await this.teacherRepository.findOne({
-      where: { userId: user.id, isDeleted: false,teacherBookings: { isDeleted: false,status: In([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]) } },
-      relations: ['teacherBookings', 'teacherBookings.teacher', 'teacherBookings.student', 'teacherBookings.student.user','teacherBookings.student.user.details', 'teacherBookings.teacherSubject', 'teacherBookings.availability', 'teacherBookings.teacherSubject.subject'],
+      where: { userId: user.id, isDeleted: false, teacherBookings: { isDeleted: false, status: In([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]) } },
+      relations: ['teacherBookings', 'teacherBookings.teacher', 'teacherBookings.student', 'teacherBookings.student.user', 'teacherBookings.student.user.details', 'teacherBookings.teacherSubject', 'teacherBookings.availability', 'teacherBookings.teacherSubject.subject'],
     });
     if (!teacher) {
       throw new NotFoundException('Teacher not found');
@@ -114,7 +115,7 @@ export class TeacherService {
   }
 
   async getTeacherBookingById(bookingId: string): Promise<TeacherBooking> {
-    const booking = await this.teacherBookingRepository.findOne({ where: { id: bookingId, isDeleted: false }, relations: ['teacher','teacher.user','teacher.user.details', 'student', 'student.user','student.user.details', 'teacherSubject', 'availability', 'teacherSubject.subject'] });
+    const booking = await this.teacherBookingRepository.findOne({ where: { id: bookingId, isDeleted: false }, relations: ['teacher', 'teacher.user', 'teacher.user.details', 'student', 'student.user', 'student.user.details', 'teacherSubject', 'availability', 'teacherSubject.subject'] });
     if (!booking) {
       throw new NotFoundException('Booking not found');
     }
@@ -222,7 +223,7 @@ export class TeacherService {
 
     // Organize class students
     const classStudentsMap = new Map<string, { classId: string; className: string; students: Set<string> }>();
-    
+
     classes.forEach(classEntity => {
       const key = classEntity.id;
       if (!classStudentsMap.has(key)) {
@@ -345,7 +346,7 @@ export class TeacherService {
 
     // Performance by type
     const performanceByType = new Map<string, { totalScore: number; maxScore: number; count: number; completed: number }>();
-    
+
     assignmentData.forEach(ad => {
       const type = ad.assignment.type;
       if (!performanceByType.has(type)) {
@@ -393,7 +394,7 @@ export class TeacherService {
     // Get all students
     const studentsData = await this.getAllStudents(user);
     const allStudentIds = new Set<string>();
-    
+
     studentsData.classStudents.forEach(cs => {
       cs.students.forEach(s => allStudentIds.add(s.id));
     });
@@ -465,7 +466,7 @@ export class TeacherService {
 
     const totalReviews = reviews.length;
     const averageRating = totalReviews > 0
-      ? reviews.reduce((sum, review) => sum + (review.rating??0), 0) / totalReviews
+      ? reviews.reduce((sum, review) => sum + (review.rating ?? 0), 0) / totalReviews
       : 0;
 
     // Rating distribution
@@ -474,7 +475,7 @@ export class TeacherService {
       distribution.set(i, 0);
     }
     reviews.forEach(review => {
-      distribution.set((review.rating??0), (distribution.get((review.rating??0)) || 0) + 1);
+      distribution.set((review.rating ?? 0), (distribution.get((review.rating ?? 0)) || 0) + 1);
     });
 
     const ratingDistribution = Array.from(distribution.entries()).map(([rating, count]) => ({
@@ -497,7 +498,7 @@ export class TeacherService {
     if (!baseCurrency) {
       return amount;
     }
-    if(currency == baseCurrency.code) {
+    if (currency == baseCurrency.code) {
       return amount;
     }
     const selectedCurrency = await this.currencyRepository.findOne({
@@ -511,7 +512,7 @@ export class TeacherService {
     return (Number(amount) * baseCurrency.exchangeRate) / selectedCurrency.exchangeRate;
   }
   async getTeacherSessions(teacherId: string, user: User, paginationRequest: PaginationRequest): Promise<TeacherSessionsDto> {
-    
+
     const query = this.teacherBookingRepository.createQueryBuilder('teacherBooking')
       .leftJoinAndSelect('teacherBooking.student', 'student')
       .leftJoinAndSelect('student.user', 'user')
@@ -520,7 +521,7 @@ export class TeacherService {
       .leftJoinAndSelect('teacherSubject.subject', 'subject')
       .leftJoinAndSelect('teacherBooking.availability', 'availability')
       .leftJoinAndSelect('teacherBooking.teacher', 'teacher')
-      .leftJoinAndSelect('teacherBooking.reviews',   'reviews',
+      .leftJoinAndSelect('teacherBooking.reviews', 'reviews',
         `
           EXISTS (
             SELECT 1 
@@ -532,11 +533,11 @@ export class TeacherService {
         `,
         { userId: user.id })
       .leftJoinAndSelect('teacher.user', 'teacherUser')
-      .leftJoinAndSelect('teacherUser.details', 'teacherDetails')      
+      .leftJoinAndSelect('teacherUser.details', 'teacherDetails')
       .where('teacher.userId = :userId', { userId: user.id })
       .andWhere('teacherBooking.isDeleted = false')
       .andWhere('teacherBooking.status not in (:...statuses)', { statuses: [BookingStatus.CANCELLED, BookingStatus.PENDING] });
-query.orderBy('teacherBooking.createdAt', 'DESC');
+    query.orderBy('teacherBooking.createdAt', 'DESC');
     query.skip((paginationRequest.page - 1) * paginationRequest.limit);
     query.take(paginationRequest.limit);
 
@@ -553,5 +554,43 @@ query.orderBy('teacherBooking.createdAt', 'DESC');
         hasPrev: paginationRequest.page > 1,
       },
     };
+  }
+
+
+  async getTeacherSessionDetails(teacherId: string, sessionId: string,user:User) {
+    const query = this.teacherBookingRepository.createQueryBuilder('teacherBooking');
+    query.leftJoinAndSelect('teacherBooking.student', 'student')
+      .leftJoinAndSelect('student.user', 'user')
+      .leftJoinAndSelect('user.details', 'details')
+      .leftJoinAndSelect('teacherBooking.teacherSubject', 'teacherSubject')
+      .leftJoinAndSelect('teacherSubject.subject', 'subject')
+      .leftJoinAndSelect('teacherBooking.availability', 'availability')
+      .leftJoinAndSelect('teacherBooking.teacher', 'teacher')
+      .leftJoinAndSelect('teacherBooking.reviews', 'reviews',
+        `
+          EXISTS (
+            SELECT 1 
+            FROM reviews r
+            WHERE r.teacherBookingId = teacherBooking.id
+            AND r.reviewerId = :userId
+          )
+          OR reviews.reviewerId = :userId
+        `,
+        { userId: user.id })
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .leftJoinAndSelect('teacherUser.details', 'teacherDetails')
+      .leftJoinAndSelect('teacherBooking.assignments', 'assignments')
+      .where('teacherBooking.id = :sessionId', { sessionId: sessionId })
+      .andWhere('teacherBooking.isDeleted = false')
+      .andWhere('teacherBooking.status not in (:...statuses)', { statuses: [BookingStatus.CANCELLED, BookingStatus.PENDING] });
+    query.orderBy('teacherBooking.createdAt', 'DESC');
+    const result = await query.getOne();
+    if (!result) {
+      throw new NotFoundException("Session details not found.");
+    }
+    const response: TeacherSessionDetailsDto = {
+      details: result
+    }
+    return response;
   }
 }

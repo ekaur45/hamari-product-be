@@ -41,7 +41,7 @@ export default class Assignment {
   @Column({ type: 'uuid', nullable: true })
   teacherBookingId: string | null;
 
-  @ManyToOne(() => TeacherBooking, { nullable: true })
+  @ManyToOne(() => TeacherBooking,teacherBooking=>teacherBooking.assignments, { nullable: true })
   @JoinColumn({ name: 'teacherBookingId' })
   teacherBooking: TeacherBooking | null;
 

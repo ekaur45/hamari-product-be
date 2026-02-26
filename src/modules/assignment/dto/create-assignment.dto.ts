@@ -71,7 +71,6 @@ export class CreateAssignmentDto {
     
     @ApiProperty({ description: 'Attachment file paths/URLs', type: [String] })
     @IsArray()
-    @IsString({ each: true })
     attachments: CreateAssignmentAttachmentDto[];
 
     @ApiProperty({ description: 'Student user ID', type: String })
