@@ -511,6 +511,7 @@ export class TeacherService {
     return (Number(amount) * baseCurrency.exchangeRate) / selectedCurrency.exchangeRate;
   }
   async getTeacherSessions(teacherId: string, user: User, paginationRequest: PaginationRequest): Promise<TeacherSessionsDto> {
+    
     const query = this.teacherBookingRepository.createQueryBuilder('teacherBooking')
       .leftJoinAndSelect('teacherBooking.student', 'student')
       .leftJoinAndSelect('student.user', 'user')
@@ -519,7 +520,17 @@ export class TeacherService {
       .leftJoinAndSelect('teacherSubject.subject', 'subject')
       .leftJoinAndSelect('teacherBooking.availability', 'availability')
       .leftJoinAndSelect('teacherBooking.teacher', 'teacher')
-      .leftJoinAndSelect('teacherBooking.reviews', 'reviews','reviews.reviewerId=teacher.userId')
+      .leftJoinAndSelect('teacherBooking.reviews',   'reviews',
+        `
+          EXISTS (
+            SELECT 1 
+            FROM reviews r
+            WHERE r.teacherBookingId = teacherBooking.id
+            AND r.reviewerId = :userId
+          )
+          OR reviews.reviewerId = :userId
+        `,
+        { userId: user.id })
       .leftJoinAndSelect('teacher.user', 'teacherUser')
       .leftJoinAndSelect('teacherUser.details', 'teacherDetails')      
       .where('teacher.userId = :userId', { userId: user.id })
