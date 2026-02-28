@@ -133,6 +133,7 @@ export class StudentService {
       .leftJoinAndSelect('assignment.teacherBooking', 'teacherBooking')
       .leftJoinAndSelect('assignment.teacher', 'teacher')
       .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .leftJoinAndSelect('teacherUser.details', 'teacherUserDetails')
       .leftJoinAndSelect('assignment.submissions', 'submissions', 'submissions.studentId = :studentId AND submissions.isDeleted = false', { studentId: student.id })
       .where('assignment.isDeleted = :isDeleted', { isDeleted: false })
       .andWhere('assignment.status != :status', { status: AssignmentStatus.DRAFT });
@@ -386,6 +387,7 @@ export class StudentService {
       .createQueryBuilder('booking')
       .leftJoinAndSelect('booking.teacher', 'teacher')
       .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .leftJoinAndSelect('teacherUser.details', 'teacherUserDetails')
       .leftJoinAndSelect('booking.teacherSubject', 'teacherSubject')
       .leftJoinAndSelect('teacherSubject.subject', 'subject')
       .leftJoinAndSelect('booking.availability', 'availability')
@@ -679,5 +681,24 @@ export class StudentService {
     result.performanceByType = performanceByTypeArray;
 
     return result;
+  }
+  async getBookingDetails(studentUserId,bookingId,userId):Promise<TeacherBooking>{
+    const query = this.teacherBookingRepository
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.teacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      .leftJoinAndSelect('teacherUser.details', 'teacherUserDetails')
+      .leftJoinAndSelect('booking.teacherSubject', 'teacherSubject')
+      .leftJoinAndSelect('teacherSubject.subject', 'subject')
+      .leftJoinAndSelect('booking.availability', 'availability')
+      .leftJoinAndSelect('booking.reviews', 'reviews')
+      .where('booking.id = :bookingId', { bookingId: bookingId })
+      .andWhere('booking.isDeleted = :isDeleted AND booking.status in (:...statuses)', { isDeleted: false, statuses: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED,BookingStatus.CANCELLED] });
+      query.orderBy('booking.bookingDate', 'DESC');
+      const result = await query.getOne();
+      if(!result){
+        throw new NotFoundException("Not found.");
+      }
+      return result;
   }
 }

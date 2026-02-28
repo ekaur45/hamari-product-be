@@ -33,6 +33,7 @@ import StudentAssignmentListDto from './dto/student-assignment-list.dto';
 import StudentBookingListDto from './dto/student-booking-list.dto';
 import StudentPerformanceDto from '../teacher/dto/student-performance.dto';
 import { BookingStatus } from '../shared/enums';
+import TeacherBooking from 'src/database/entities/teacher-booking.entity';
 
 
 @ApiTags('Student')
@@ -245,5 +246,24 @@ export class StudentController {
     const performance = await this.studentService.getMyPerformance(req.user);
     return ApiResponseModel.success(performance, 'Performance retrieved successfully');
   }
+
+    // Bookings
+    @Get(':studentId/bookings/:bookingId')
+    @ApiResponse({
+      status: 200,
+      description: 'Booking details retrieved successfully',
+      type: ApiResponseModel<TeacherBooking>,
+    })
+    async getBookingDetails(
+      @Param('studentId') studentId: string,
+      @Param('bookingId') bookingId: string,
+      @Request() req: { user: User },
+      @Query('page') page: number = 1,
+      @Query('limit') limit: number = 10,
+      @Query('status') status?: BookingStatus,
+    ): Promise<ApiResponseModel<TeacherBooking>> {
+      const result = await this.studentService.getBookingDetails(studentId,bookingId,req.user.id);
+      return ApiResponseModel.success(result, 'Booking details retrieved successfully');
+    }
 }
 
